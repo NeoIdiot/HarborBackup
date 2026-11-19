@@ -14,6 +14,8 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Add an optional automatic two-way backup setting for each local project, disabled by default. Automatic runs select upload or download per file using the common baseline, retain conflicts for explicit resolution and never propagate deletions.
 - Share persisted pause control and transfer/time budgets across automatic uploads and downloads, including CLI automatic calls; show each transfer's direction in run details.
 
+See the [0.9.18 validation record](docs/development/validation-0.9.18.md) for the exact source and package identity, 641 passing regression tests and 20 isolated installation checks.
+
 ## 0.9.17 — 2026-11-19
 
 - Restore current files or the previous archive into a separate directory, with content verification and bounded, rotating restore tests.
