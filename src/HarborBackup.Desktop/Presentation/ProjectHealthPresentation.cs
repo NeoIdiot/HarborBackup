@@ -18,7 +18,12 @@ internal static class ProjectHealthPresentation
             UiText.Text(value.RestoreScope == "Archive" ? "上一份归档" : "云端当前文件"), value.RestoreVerifiedFiles);
 
     internal static string Summary(ProjectHealthSnapshot value) => UiText.Text("完整成功：{0}\n还原核验：{1}\n{2}",
-        Time(value.LastFullSuccessUtc), RestoreVerification(value), Backlog(value));
+        value.LastFullSuccessUtc is null ? UiText.Text("尚无完整成功记录") : Time(value.LastFullSuccessUtc), RestoreVerification(value), Backlog(value));
+
+    internal static string Compact(ProjectHealthSnapshot value, DateTimeOffset now) => UiText.Text(
+        value.OldestPendingUtc is not null || value.KnownBacklogCount > 0 || value.PendingCountIncomplete ? "有待处理项" :
+        value.LastFullSuccessUtc is null ? "状态未知" :
+        value.NeedsAttention(now) ? "记录较旧" : "无已知积压");
 
     internal static bool SameDetails(IReadOnlyList<DetailRow> first, IReadOnlyList<DetailRow> second) => first.Count == second.Count &&
         first.Zip(second).All(pair => (pair.First with { DetailArguments = null }) == (pair.Second with { DetailArguments = null }) &&

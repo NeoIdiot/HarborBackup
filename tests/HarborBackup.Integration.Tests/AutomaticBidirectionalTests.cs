@@ -3,6 +3,7 @@ using System.Text.Json;
 using HarborBackup.Core.Domain;
 using HarborBackup.Windows.Integration;
 using HarborBackup.Windows.Persistence;
+using HarborBackup.Windows.Persistence.Configuration;
 using static HarborBackup.Windows.Tests.CloudTransportTests;
 
 namespace HarborBackup.Windows.Tests;
@@ -18,7 +19,10 @@ public sealed class AutomaticBidirectionalTests
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
     }
     private static ConfigurationSnapshot Enable(ConfigurationSnapshot config, params string[] projects) =>
-        config with { AutomaticBidirectionalProjects = new HashSet<string>(projects) };
+        Enable(config, AutomaticBackupMode.Bidirectional, projects);
+
+    private static ConfigurationSnapshot Enable(ConfigurationSnapshot config, AutomaticBackupMode mode, params string[] projects) =>
+        config with { AutomaticBackupModes = projects.ToDictionary(p => p, _ => mode) };
 
     private static Task<BackupReport> Run(Fixture f, ConfigurationSnapshot config, bool automatic = true,
         CancellationToken token = default) => new CloudBackupRuntime(config, () => f.Drive, 1)
@@ -115,7 +119,9 @@ public sealed class AutomaticBidirectionalTests
     }
 
     [TestMethod]
-    public async Task DivergentAndUnbasedChangesAreProtectedAndUnknownCloudFilesAreNotDownloaded()
+    [DataRow(AutomaticBackupMode.Bidirectional)]
+    [DataRow(AutomaticBackupMode.DownloadOnly)]
+    public async Task DivergentAndUnbasedChangesAreProtectedAndUnknownCloudFilesAreNotDownloaded(AutomaticBackupMode mode)
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B");
         Write(a.P, "conflict.txt", "base"); await Apply(a.S); await Apply(b.S, SyncDirection.Pull);
@@ -124,7 +130,7 @@ public sealed class AutomaticBidirectionalTests
         var root = (await f.Drive.FindAsync("drive-root", "Documents", default))!;
         f.Drive.Add(root.Id, "unknown.txt", Encoding.UTF8.GetBytes("unmanaged"));
         var downloads = f.Drive.BusinessDownloads;
-        var result = await Run(f, Enable(a.C, a.P.ProjectId));
+        var result = await Run(f, Enable(a.C, mode, a.P.ProjectId));
         Assert.AreEqual(2, result.ExitCode, JsonSerializer.Serialize(result));
         foreach (var path in new[] { "conflict.txt", "unbased.txt" })
             Assert.AreEqual(FileAction.ConflictUnresolved, result.Projects.Single().Files.Single(p => p.Path == path).Action);
@@ -144,7 +150,9 @@ public sealed class AutomaticBidirectionalTests
     }
 
     [TestMethod]
-    public async Task FreshLocalHashPreventsDownloadOverAnEditHiddenByUnchangedSizeAndTime()
+    [DataRow(AutomaticBackupMode.Bidirectional)]
+    [DataRow(AutomaticBackupMode.DownloadOnly)]
+    public async Task FreshLocalHashPreventsDownloadOverAnEditHiddenByUnchangedSizeAndTime(AutomaticBackupMode mode)
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B");
         Write(a.P, "a.txt", "base"); await Apply(a.S); await Apply(b.S, SyncDirection.Pull);
@@ -152,7 +160,7 @@ public sealed class AutomaticBidirectionalTests
         Write(b.P, "a.txt", "cloud changed"); await Apply(b.S);
         File.WriteAllText(path, "edit"); File.SetLastWriteTimeUtc(path, stamp);
         var downloads = f.Drive.BusinessDownloads;
-        var result = await Run(f, Enable(a.C, a.P.ProjectId));
+        var result = await Run(f, Enable(a.C, mode, a.P.ProjectId));
         Assert.AreEqual(FileAction.ConflictUnresolved, result.Projects.Single().Files.Single().Action);
         Assert.AreEqual("edit", File.ReadAllText(path));
         Assert.AreEqual("cloud changed", await CloudText(f, "Documents", "a.txt"));
@@ -208,12 +216,14 @@ public sealed class AutomaticBidirectionalTests
     }
 
     [TestMethod]
-    public async Task NewMappingsWaitForManualInitializationAndMissingExistingRootsAreNotRecreated()
+    [DataRow(AutomaticBackupMode.Bidirectional)]
+    [DataRow(AutomaticBackupMode.DownloadOnly)]
+    public async Task NewMappingsWaitForManualInitializationAndMissingExistingRootsAreNotRecreated(AutomaticBackupMode mode)
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B");
         Write(b.P, "a.txt", "cloud"); await Apply(b.S);
         var project = a.P with { MappingVersion = Guid.NewGuid().ToString("N") };
-        var config = Enable(a.C with { Projects = [project] }, project.ProjectId);
+        var config = Enable(a.C with { Projects = [project] }, mode, project.ProjectId);
         var awaiting = await Run(f, config);
         Assert.AreEqual("MappingAwaitingOperation", awaiting.Projects.Single().Issues.Single().Code);
         Assert.IsFalse(File.Exists(Path.Combine(a.P.Source, "a.txt")));
@@ -229,13 +239,15 @@ public sealed class AutomaticBidirectionalTests
     }
 
     [TestMethod]
-    public async Task PersistedPauseSkipsBothDirectionsWithoutOpeningCloudOrReplacingLastRun()
+    [DataRow(AutomaticBackupMode.Bidirectional)]
+    [DataRow(AutomaticBackupMode.DownloadOnly)]
+    public async Task PersistedPauseSkipsBothDirectionsWithoutOpeningCloudOrReplacingLastRun(AutomaticBackupMode mode)
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B");
         Write(a.P, "a.txt", "base"); await Run(f, a.C, false); await Apply(b.S, SyncDirection.Pull);
         Write(b.P, "a.txt", "cloud changed"); await Apply(b.S); Write(a.P, "local.txt", "local new");
         var previous = RunStatusStore.Read(a.C.Preview)!.ToJsonString();
-        var config = Enable(a.C, a.P.ProjectId);
+        var config = Enable(a.C, mode, a.P.ProjectId);
         var control = new DeviceControlStore(config.Preview); control.SetPaused(true);
         var paused = await new CloudBackupRuntime(config, () => throw new AssertFailedException("Paused work must not open the cloud."))
             .ExecuteAsync(SyncDirection.Backup, null, false, false, null, default, automatic: true);
@@ -246,7 +258,13 @@ public sealed class AutomaticBidirectionalTests
         control.SetPaused(false);
         Assert.AreEqual(0, (await Run(f, config)).ExitCode);
         Assert.AreEqual("cloud changed", File.ReadAllText(Path.Combine(a.P.Source, "a.txt")));
-        Assert.AreEqual("local new", await CloudText(f, "Documents", "local.txt"));
+        if (mode == AutomaticBackupMode.Bidirectional)
+            Assert.AreEqual("local new", await CloudText(f, "Documents", "local.txt"));
+        else
+        {
+            var root = (await f.Drive.FindAsync("drive-root", "Documents", default))!;
+            Assert.IsNull(await f.Drive.FindAsync(root.Id, "local.txt", default));
+        }
     }
 
     [TestMethod]
@@ -263,7 +281,9 @@ public sealed class AutomaticBidirectionalTests
     }
 
     [TestMethod]
-    public async Task DownloadFinishesWhenTimeBudgetExpiresAndNextFileWaits()
+    [DataRow(AutomaticBackupMode.Bidirectional)]
+    [DataRow(AutomaticBackupMode.DownloadOnly)]
+    public async Task DownloadFinishesWhenTimeBudgetExpiresAndNextFileWaits(AutomaticBackupMode mode)
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B"); var clock = new Clock();
         Write(b.P, "a.txt", "first"); Write(b.P, "b.txt", "second"); await Apply(b.S);
@@ -272,7 +292,7 @@ public sealed class AutomaticBidirectionalTests
             if (name == "a.txt") clock.Ticks = TimeSpan.FromMinutes(2).Ticks;
             return Task.CompletedTask;
         };
-        var config = Enable(a.C, a.P.ProjectId) with { AutomaticBudget = new(0, 1) };
+        var config = Enable(a.C, mode, a.P.ProjectId) with { AutomaticBudget = new(0, 1) };
         var report = await new CloudBackupRuntime(config, () => f.Drive, 1, clock)
             .ExecuteAsync(SyncDirection.Backup, null, false, false, null, default, automatic: true);
         Assert.AreEqual("BudgetLimited", report.Completion, JsonSerializer.Serialize(report));

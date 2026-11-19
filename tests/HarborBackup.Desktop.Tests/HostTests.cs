@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using HarborBackup.Core.Domain;
 using HarborBackup.Desktop;
 using HarborBackup.Desktop.Controllers;
@@ -403,7 +403,7 @@ public sealed class HostTests
                         Assert.AreEqual(47, input.Value);
                         Assert.IsTrue(settings.Dirty, "Language changes must keep the unsaved draft.");
                         Assert.AreEqual(english ? "Settings" : "设置", form.Controls.Find("Navigate设置", true).Single().Text);
-                        Assert.AreEqual(english ? "Back up now" : "立即备份", form.Controls.Find("立即备份", true).Single().Text);
+                        Assert.AreEqual(english ? "Run now" : "立即运行", form.Controls.Find("立即运行", true).Single().Text);
                         if (english)
                         {
                             // Exercise the real timer past its five-second configuration poll.
@@ -435,7 +435,7 @@ public sealed class HostTests
                             await form.NavigateAsync("设置");
                             form.PerformLayout(); settings.PerformLayout();
                             var header = form.Controls.Find("PageHeader", true).Single();
-                            foreach (var name in new[] { "立即备份", "暂停自动备份", "停止当前操作" })
+                            foreach (var name in new[] { "立即运行", "暂停自动备份", "停止当前操作" })
                             {
                                 var button = form.Controls.Find(name, true).Single();
                                 if (!button.Visible) continue;
@@ -604,7 +604,7 @@ public sealed class HostTests
                             editor.Show(form);
                             ((TextBox)editor.Controls.Find("Destination", true).Single()).Text = "项目/Settings";
                             Assert.AreEqual("项目/Settings", editor.Controls.Find("Destination", true).Single().Text);
-                            Assert.AreEqual("OneDrive/项目/Settings", editor.Controls.Find("ResolvedTarget", true).Single().Text);
+                            Assert.IsEmpty(editor.Controls.Find("ResolvedTarget", true));
                             Capture(editor, (english ? "en" : "zh") + "-editor"); editor.Close();
                         }
                         using (var picker = new CloudTargetDialog(_ => Task.FromResult(new HarborBackup.Windows.Integration.CloudFolderListing(
@@ -716,7 +716,7 @@ public sealed class HostTests
                         await controller.RefreshAsync();
                         Assert.AreEqual(!damaged, controller.State.NeedsSetup);
                         Assert.AreEqual(!damaged, form.Controls.Find("WelcomePanel", true).Single().Visible);
-                        Assert.IsFalse(((Button)form.Controls.Find("立即备份", true).Single()).Enabled);
+                        Assert.IsFalse(((Button)form.Controls.Find("立即运行", true).Single()).Enabled);
                         Assert.HasCount(damaged ? 1 : 0, controller.State.Details);
                         var screenshotDirectory = Environment.GetEnvironmentVariable("HARBORBACKUP_SCREENSHOT_DIR");
                         if (screenshotDirectory is not null)

@@ -23,6 +23,12 @@ internal sealed partial class MainForm
         var more = projectMore;
         more.Name = "ProjectMoreActions";
         var moreMenu = new AppMenu();
+        moreMenu.Items.Add("查看项目状态…", null, (_, _) =>
+        {
+            if (projectGrid.CurrentRow?.DataBoundItem is not ProjectRow row) return;
+            using var dialog = new ProjectStatusDialog(row);
+            dialog.ShowDialog(this);
+        }).Name = "ViewProjectStatus";
         moreMenu.Items.Add("完整核查（只读）", null, async (_, _) => await ExecuteAsync(DesktopCommand.Verify, true));
         moreMenu.Items.Add("核查并备份", null, async (_, _) => await ExecuteAsync(DesktopCommand.FullBackup, true));
         moreMenu.Items.Add(new ToolStripSeparator());
@@ -31,13 +37,33 @@ internal sealed partial class MainForm
         more.Click += (_, _) => moreMenu.Show(more, new Point(0, more.Height));
         more.ContextMenuStrip = moreMenu;
         Disposed += (_, _) => moreMenu.Dispose();
-        projectsPage.Controls.Add(AppStyle.Toolbar(Operation("预览选中", DesktopCommand.Preview, true), Operation("备份选中", DesktopCommand.Backup, true),
-            Operation("取回更新…", DesktopCommand.PullPreview, true), CloudProjectButton("取回云端项目…", true), more));
+        projectsPage.Controls.Add(AppStyle.Toolbar(Operation("预览上传", DesktopCommand.Preview, true), Operation("上传选中", DesktopCommand.Backup, true),
+            Operation("下载更新…", DesktopCommand.PullPreview, true), CloudProjectButton("取回云端项目…", true), more));
         projectGrid.Name = "ProjectGrid";
-        projectGrid.Columns[5].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-        projectGrid.Columns[6].MinimumWidth = 120;
-        projectGrid.Columns[6].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-        projectGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+        projectGrid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+        projectGrid.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.False;
+        projectGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+        void FitStatusColumns()
+        {
+            int Width(params string[] keys) => keys.Max(key => TextRenderer.MeasureText(UiText.Text(key), projectGrid.Font).Width)
+                + projectGrid.DefaultCellStyle.Padding.Horizontal + 6;
+            projectGrid.Columns[4].MinimumWidth = Width("保护状态", "状态未知", "待初始化", "有待处理项", "记录较旧", "无已知积压");
+            projectGrid.Columns[5].MinimumWidth = Width("备份模式", "仅上传", "双向备份", "仅下载");
+        }
+        UiText.Watch(projectGrid, FitStatusColumns);
+        projectGrid.FontChanged += (_, _) => FitStatusColumns();
+        projectGrid.DpiChangedAfterParent += (_, _) => FitStatusColumns();
+        projectGrid.CellToolTipTextNeeded += (_, e) =>
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || projectGrid.Rows[e.RowIndex].DataBoundItem is not ProjectRow row) return;
+            e.ToolTipText = projectGrid.Columns[e.ColumnIndex].DataPropertyName switch
+            {
+                "DisplayProtection" => row.DisplayProtectionDetails,
+                "Destination" => row.Target,
+                "DisplaySource" => row.DisplaySource,
+                _ => projectGrid.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue?.ToString() ?? ""
+            };
+        };
         projectGrid.CurrentCellChanged += (_, _) => UpdateProjectActions();
         refreshCatalog.Click += async (_, _) => await LoadCloudProjectsAsync();
         cancelCatalog.Click += (_, _) => catalogCancellation?.Cancel();

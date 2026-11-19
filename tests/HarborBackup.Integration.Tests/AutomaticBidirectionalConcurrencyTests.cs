@@ -4,6 +4,7 @@ using System.Text.Json;
 using HarborBackup.Core.Domain;
 using HarborBackup.Windows.Integration;
 using HarborBackup.Windows.Persistence;
+using HarborBackup.Windows.Persistence.Configuration;
 using static HarborBackup.Windows.Tests.CloudTransportTests;
 
 namespace HarborBackup.Windows.Tests;
@@ -61,7 +62,7 @@ public sealed class AutomaticBidirectionalConcurrencyTests
         foreach (var name in UploadNames) File.WriteAllText(Path.Combine(a.P.Source, name), "local update " + name);
         var config = a.C with
         {
-            AutomaticBidirectionalProjects = new HashSet<string> { a.P.ProjectId },
+            AutomaticBackupModes = new Dictionary<string, AutomaticBackupMode> { [a.P.ProjectId] = AutomaticBackupMode.Bidirectional },
             // Force upload preparation for existing local files before the run selects their pull direction.
             Preview = a.C.Preview with { Hash = new(UseMetadataCache: false) }
         };

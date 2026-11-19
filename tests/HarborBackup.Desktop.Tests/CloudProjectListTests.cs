@@ -1,4 +1,4 @@
-using HarborBackup.Desktop.Controllers;
+﻿using HarborBackup.Desktop.Controllers;
 using HarborBackup.Desktop.Localization;
 using HarborBackup.Desktop.Presentation;
 using HarborBackup.Desktop.Views;
@@ -165,9 +165,9 @@ public sealed class CloudProjectListTests
             Assert.IsFalse(row.IsLocal);
             Assert.AreEqual("未关联本机目录", row.LocalStatus);
             Assert.IsTrue(Button(form, "取回云端项目…").Enabled);
-            Assert.IsFalse(Button(form, "备份选中").Enabled);
+            Assert.IsFalse(Button(form, "上传选中").Enabled);
             Assert.IsFalse(Button(form, "编辑选中").Enabled);
-            Assert.IsFalse(Button(form, "立即备份").Enabled);
+            Assert.IsFalse(Button(form, "立即运行").Enabled);
             await controller.RefreshAsync();
             await form.NavigateAsync("概览");
             await form.NavigateAsync("备份项目");
@@ -175,6 +175,22 @@ public sealed class CloudProjectListTests
             Assert.IsFalse(File.Exists(paths.ProjectConfig));
             Assert.IsFalse(File.Exists(paths.SystemConfig));
             Capture(form, "cloud-only-projects");
+        });
+    }
+
+    [TestMethod]
+    public async Task RunNowHonorsAutomaticPauseWhileExplicitUploadRemainsAvailable()
+    {
+        using var ws = new TestWorkspace();
+        await RunForm(Paths(ws), (_, _) => Task.FromResult<IReadOnlyList<CloudProjectTarget>>([]), async (controller, form) =>
+        {
+            await form.NavigateAsync("备份项目");
+            await controller.SetPausedAsync(true);
+            Assert.IsFalse(Button(form, "立即运行").Enabled);
+            Assert.IsTrue(Button(form, "上传选中").Enabled);
+            Assert.IsNull(await controller.RunAsync(DesktopCommand.RunConfigured));
+            await controller.SetPausedAsync(false);
+            Assert.IsTrue(Button(form, "立即运行").Enabled);
         });
     }
 
@@ -197,10 +213,10 @@ public sealed class CloudProjectListTests
                 Assert.AreEqual("本地目录存在", rows[0].LocalStatus);
                 Assert.AreEqual("本地目录缺失", rows[1].LocalStatus);
                 grid.CurrentCell = grid.Rows[0].Cells[0];
-                Assert.IsTrue(Button(form, "备份选中").Enabled);
+                Assert.IsTrue(Button(form, "上传选中").Enabled);
                 grid.CurrentCell = grid.Rows[2].Cells[0];
-                Assert.IsFalse(Button(form, "备份选中").Enabled);
-                Assert.IsFalse(Button(form, "取回更新…").Enabled);
+                Assert.IsFalse(Button(form, "上传选中").Enabled);
+                Assert.IsFalse(Button(form, "下载更新…").Enabled);
                 Assert.IsTrue(Button(form, "取回云端项目…").Enabled);
                 Capture(form, "mixed-projects");
             });

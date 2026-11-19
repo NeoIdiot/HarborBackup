@@ -1220,4 +1220,32 @@ Evidence is local SHA-256 and cloud metadata; cloud file bodies are not download
   <data name="创建云端目录" xml:space="preserve"><value>Create cloud directory</value></data>
   <data name="创建本地目录" xml:space="preserve"><value>Create local directory</value></data>
   <data name="AutomaticBackupPaused" xml:space="preserve"><value>Scheduled backups paused</value></data>
+  <data name="自动备份模式" xml:space="preserve"><value>Automatic backup mode</value></data>
+  <data name="仅上传" xml:space="preserve"><value>Upload only</value></data>
+  <data name="双向备份" xml:space="preserve"><value>Two-way backup</value></data>
+  <data name="仅下载" xml:space="preserve"><value>Download only</value></data>
+  <data name="本地目录" xml:space="preserve"><value>Local folder</value></data>
+  <data name="云端目录（相对 OneDrive 根目录）" xml:space="preserve"><value>Cloud folder (relative to OneDrive root)</value></data>
+  <data name="仅将本地更新上传到 OneDrive。" xml:space="preserve"><value>Upload local updates to OneDrive only.</value></data>
+  <data name="自动上传本地更新、下载云端更新。" xml:space="preserve"><value>Automatically upload local updates and download cloud updates.</value></data>
+  <data name="下载云端更新，不上传本地业务文件。" xml:space="preserve"><value>Download cloud updates without uploading local project files.</value></data>
+  <data name="删除不联动；冲突需确认。" xml:space="preserve"><value>Deletions are not propagated; conflicts require confirmation.</value></data>
+  <data name="保存仅更新配置。" xml:space="preserve"><value>Saving only updates configuration.</value></data>
+  <data name="立即运行" xml:space="preserve"><value>Run now</value></data>
+  <data name="上传选中" xml:space="preserve"><value>Upload selected</value></data>
+  <data name="下载更新…" xml:space="preserve"><value>Download updates…</value></data>
+  <data name="项目 / 云端目录" xml:space="preserve"><value>Project / cloud folder</value></data>
+  <data name="保护状态" xml:space="preserve"><value>Protection</value></data>
+  <data name="备份模式" xml:space="preserve"><value>Backup mode</value></data>
+  <data name="查看项目状态…" xml:space="preserve"><value>View project status…</value></data>
+  <data name="项目状态" xml:space="preserve"><value>Project status</value></data>
+  <data name="状态未知" xml:space="preserve"><value>Status unknown</value></data>
+  <data name="待初始化" xml:space="preserve"><value>Initialization required</value></data>
+  <data name="有待处理项" xml:space="preserve"><value>Pending work</value></data>
+  <data name="记录较旧" xml:space="preserve"><value>Outdated record</value></data>
+  <data name="尚无完整成功记录" xml:space="preserve"><value>No complete success recorded</value></data>
+  <data name="自动上传备份" xml:space="preserve"><value>Automatic upload backup</value></data>
+  <data name="自动下载备份" xml:space="preserve"><value>Automatic download backup</value></data>
+  <data name="自动混合备份" xml:space="preserve"><value>Automatic backup (mixed modes)</value></data>
+  <data name="预览上传" xml:space="preserve"><value>Preview upload</value></data>
 </root>

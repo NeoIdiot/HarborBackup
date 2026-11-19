@@ -8,6 +8,14 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Prepare Windows synthetic-test CI, dependency-update configuration and contribution templates. Hosted CI has not yet been exercised in a public repository.
 - Require future release payloads to include the exact project license.
 
+## 0.9.19 — 2026-11-19
+
+- Replace the project automatic two-way checkbox with Upload only, Two-way backup and Download only modes; retain common baselines, initialization, conflict protection and automatic budgets when switching modes.
+- Make Run now follow each project's mode, while explicit upload/download actions retain their direction. Keep reading existing Boolean mode settings.
+- Keep project protection status on one line with full evidence in tooltips and project details; remove duplicate resolved cloud-target displays and retain paths relative to OneDrive root.
+
+Development regression: 666 passing tests and four process-interruption recovery checks. See the [development validation record](docs/development/validation-project-modes-2026-11-19.md); installer validation is recorded separately after packaging.
+
 ## 0.9.18 — 2026-11-19
 
 - Close the main window with Esc while keeping the tray icon and background tasks running, matching the window's close button.

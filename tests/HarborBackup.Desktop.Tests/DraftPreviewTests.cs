@@ -48,7 +48,7 @@ public sealed class DraftPreviewTests
                     Assert.AreEqual(local.Right, cloud.Right, "Both path fields must share their right edge.");
                     Assert.AreEqual(localButton.Left, cloudButton.Left);
                     Assert.AreEqual(localButton.Right, cloudButton.Right);
-                    Assert.AreEqual(Bounds(Find("ResolvedTargetFrame")).Right, cloudButton.Right);
+                    Assert.IsEmpty(dialog.Controls.Find("ResolvedTarget", true), "The cloud path is relative to OneDrive root; no duplicate resolved field is needed.");
                     foreach (var (field, button) in new[] { (local, localButton), (cloud, cloudButton) })
                     {
                         Assert.AreEqual(field.Top, button.Top, "Input frame and browse button must share their top edge.");

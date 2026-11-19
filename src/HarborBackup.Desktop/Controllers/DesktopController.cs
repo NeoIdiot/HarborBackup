@@ -9,7 +9,7 @@ using HarborBackup.Windows.Persistence.Configuration;
 
 namespace HarborBackup.Desktop.Controllers;
 
-internal enum DesktopCommand { Backup, Preview, UploadPreview, PullPreview, Pull, Verify, FullBackup, Recover }
+internal enum DesktopCommand { Backup, Preview, UploadPreview, PullPreview, Pull, Verify, FullBackup, Recover, RunConfigured }
 
 internal sealed partial class DesktopController(RuntimePaths paths,
     Func<CloudAccountSettings, CancellationToken, Task<IReadOnlyList<CloudProjectTarget>>>? cloudCatalogReader = null,
@@ -98,8 +98,8 @@ internal sealed partial class DesktopController(RuntimePaths paths,
                 }, null, "运行状态无法读取，仍可编辑配置。")).ToArray();
                 var lastCompleted = ReadState<DateTimeOffset?>(() => saved?["lastRun"]?["completedAtUtc"] is { } stamp &&
                     DateTimeOffset.TryParse(stamp.GetValue<string>(), out var value) ? value : null, null, "运行状态无法读取，仍可编辑配置。");
-                var health = c.Projects.Select(p => ReadState(() => ProjectHealthStore.Read(c, p, saved),
-                    new ProjectHealthSnapshot(CloudMapping.Bind(p, c)), "项目保护状态无法读取，仍可编辑配置。")).ToArray();
+                var health = c.Projects.Select(p => ReadState<ProjectHealthSnapshot?>(() => ProjectHealthStore.Read(c, p, saved),
+                    null, "项目保护状态无法读取，仍可编辑配置。")).ToArray();
                 return (Config: c, LocalStatuses: c.Projects.Select(p => ReadState(() =>
                     p.ConfigurationError is null && CloudMapping.NeedsFirstOperation(p, c) ? "待首次上传或拉取" : ProjectListPresentation.LocalStatus(p.Source),
                     "待核验", "目录状态无法读取，仍可编辑配置。")).ToArray(), Paused: paused, Results: results, LastCompleted: lastCompleted,
@@ -122,7 +122,8 @@ internal sealed partial class DesktopController(RuntimePaths paths,
                 var target = CloudAccountPresentation.Path(p.Destination);
                 return new ProjectRow(p.Destination, p.Source, target, p.ConfigurationError ?? result switch
                 { "Success" => "云端操作已完成", "Warning" => "有待处理问题", "BudgetLimited" => "预算已用完，下轮继续", "OfflineInterrupted" => "上次运行因断网中断", "Failed" => "失败", "Cancelled" => "已停止", _ => "尚未运行" }, LocalStatus: loaded.LocalStatuses[index], CloudFolderId: p.CloudFolderId, ProjectId: p.ProjectId)
-                { Health = loaded.Health[index], AutomaticBidirectional = config.AutomaticBidirectionalProjects.Contains(p.ProjectId) };
+                { Health = loaded.Health[index], AutomaticMode = config.GetAutomaticBackupMode(p.ProjectId),
+                    NeedsInitialization = loaded.LocalStatuses[index] == "待首次上传或拉取" };
             }).ToArray();
             if (!projects.SequenceEqual(refreshedProjects)) projects = refreshedProjects;
             if (loaded.LastCompleted is { } value && (completed is null || value > completed)) completed = value;
@@ -178,6 +179,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
     public async Task<object?> RunAsync(DesktopCommand command, string? destination = null, bool automatic = false, PullSelection? confirmedPull = null, ConfigurationDraft? joinDraft = null, PullSelection? confirmedUpload = null, bool fullPreview = false)
     {
         if (Busy || stopping) return null;
+        automatic |= command == DesktopCommand.RunConfigured;
         object? result = null;
         var updates = new ProgressMailbox();
         using var progressTimer = new System.Windows.Forms.Timer { Interval = 150 };

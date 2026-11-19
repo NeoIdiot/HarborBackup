@@ -9,7 +9,7 @@ using HarborBackup.Windows.Integration;
 
 namespace HarborBackup.Desktop;
 
-internal enum TrayCommand { Backup, Preview, Pull, Verify, FullBackup, Recover }
+internal enum TrayCommand { Backup, Preview, Pull, Verify, FullBackup, Recover, RunConfigured }
 
 /// <summary>Owns desktop lifetime only. Both UI surfaces use the same controller.</summary>
 internal sealed class TrayContext : ApplicationContext
@@ -50,7 +50,7 @@ internal sealed class TrayContext : ApplicationContext
         menu.Items.Add(statusItem);
         menu.Items.Add(nextItem);
         menu.Items.Add(new ToolStripSeparator());
-        Add("立即备份", DesktopCommand.Backup);
+        Add("立即运行", DesktopCommand.RunConfigured);
         menu.Items.Add("预览 / 取回更新…", null, async (_, _) => { ShowStatus(); await window!.NavigateAsync("备份项目"); });
         Add("完整哈希核查（只读）", DesktopCommand.Verify);
         Add("恢复未完成事务", DesktopCommand.Recover);
@@ -78,7 +78,7 @@ internal sealed class TrayContext : ApplicationContext
     }
     private void Add(string caption, DesktopCommand command)
     {
-        var item = new ToolStripMenuItem(caption);
+        var item = new ToolStripMenuItem(caption) { Tag = command };
         item.Click += async (_, _) => await controller.RunAsync(command);
         operationItems.Add(item);
         menu.Items.Add(item);
@@ -97,7 +97,8 @@ internal sealed class TrayContext : ApplicationContext
         statusItem.AccessibleName = statusItem.Text; nextItem.AccessibleName = nextItem.Text; pauseItem.AccessibleName = pauseItem.Text;
         pauseItem.Checked = state.Paused;
         pauseItem.Enabled = state.Configuration is not null;
-        foreach (var item in operationItems) item.Enabled = !state.Busy && state.Configuration?.Projects.Count > 0;
+        foreach (var item in operationItems) item.Enabled = !state.Busy && state.Configuration?.Projects.Count > 0 &&
+            (item.Tag is not DesktopCommand.RunConfigured || !state.Paused);
         var presentation = TrayPresentation.Create(state, controller.CloudAccount);
         var nextIcon = trayIcons.Get(presentation.Badge, Styling.TrayIcons.TaskbarIconSize(), SystemInformation.HighContrast);
         if (!ReferenceEquals(icon.Icon, nextIcon)) icon.Icon = nextIcon;

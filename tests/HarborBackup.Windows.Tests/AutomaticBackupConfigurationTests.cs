@@ -12,10 +12,12 @@ public sealed class AutomaticBackupConfigurationTests
         Path.Combine(ws.Config, "backup-settings.json")), ws.Device, Path.Combine(ws.Root, "desktop"));
 
     [TestMethod]
-    public void AutomaticBidirectionalDefaultsOffAndIsSelectedPerProject()
+    public void AutomaticModeDefaultsToUploadAndReadsLegacyPolicyPerProject()
     {
         using var ws = new TestWorkspace();
-        Assert.IsEmpty(ws.Load().AutomaticBidirectionalProjects);
+        var initial = ws.Load();
+        Assert.AreEqual(AutomaticBackupMode.UploadOnly, initial.GetAutomaticBackupMode(initial.Projects.Single().ProjectId));
+        Assert.AreEqual(AutomaticBackupMode.UploadOnly, initial.GetAutomaticBackupMode(new string('0', 64)));
         ws.WriteProjectConfig(new { folders = new object[]
         {
             new { source = ws.Source, destination = "Projects/Default" },
@@ -23,8 +25,49 @@ public sealed class AutomaticBackupConfigurationTests
             new { source = ws.Source, destination = "Projects/Both", automaticBidirectional = true }
         } });
         var config = ws.Load();
-        Assert.HasCount(1, config.AutomaticBidirectionalProjects);
-        Assert.Contains(config.Projects.Single(p => p.Destination == "Projects/Both").ProjectId, config.AutomaticBidirectionalProjects);
+        Assert.HasCount(3, config.AutomaticBackupModes);
+        foreach (var project in config.Projects)
+            Assert.AreEqual(project.Destination == "Projects/Both" ? AutomaticBackupMode.Bidirectional : AutomaticBackupMode.UploadOnly,
+                config.GetAutomaticBackupMode(project.ProjectId));
+        Assert.IsFalse(Directory.Exists(ws.State));
+    }
+
+    [TestMethod]
+    [DataRow("upload", AutomaticBackupMode.UploadOnly)]
+    [DataRow("bidirectional", AutomaticBackupMode.Bidirectional)]
+    [DataRow("download", AutomaticBackupMode.DownloadOnly)]
+    public void ExplicitModeOverridesLegacyPolicy(string value, AutomaticBackupMode expected)
+    {
+        using var ws = new TestWorkspace();
+        var path = Path.Combine(ws.Config, "projects.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))!;
+        document["folders"]![0]!["automaticBackupMode"] = value;
+        // A superseded field is not interpreted by clients that understand the new policy.
+        document["folders"]![0]!["automaticBidirectional"] = "obsolete value";
+        File.WriteAllText(path, document.ToJsonString());
+        var config = ws.Load();
+        Assert.AreEqual(expected, config.GetAutomaticBackupMode(config.Projects.Single().ProjectId));
+        Assert.IsFalse(Directory.Exists(ws.State));
+    }
+
+    [TestMethod]
+    [DataRow("null")]
+    [DataRow("true")]
+    [DataRow("1")]
+    [DataRow("[]")]
+    [DataRow("{}")]
+    [DataRow("\"\"")]
+    [DataRow("\"Upload\"")]
+    [DataRow("\"mirror\"")]
+    public void InvalidExplicitModesAreRejectedWithoutFallingBackToLegacy(string json)
+    {
+        using var ws = new TestWorkspace();
+        var path = Path.Combine(ws.Config, "projects.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))!;
+        document["folders"]![0]!["automaticBackupMode"] = JsonNode.Parse(json);
+        document["folders"]![0]!["automaticBidirectional"] = true;
+        File.WriteAllText(path, document.ToJsonString());
+        Assert.Throws<FormatException>(() => ws.Load());
         Assert.IsFalse(Directory.Exists(ws.State));
     }
 
@@ -58,13 +101,14 @@ public sealed class AutomaticBackupConfigurationTests
         var originalMapping = CloudMapping.Capture(project, before);
         ws.Write(CloudMapping.StateRoot(project, before), "baselines.json", "retained baseline evidence");
         var state = Directory.GetFiles(ws.State, "*", SearchOption.AllDirectories).ToDictionary(p => p, File.ReadAllBytes);
-        foreach (var enabled in new[] { true, false, true })
+        foreach (var mode in new[] { "bidirectional", "download", "upload", "download" })
         {
             var draft = editor.Load();
-            draft.Projects["folders"]![0]!["automaticBidirectional"] = enabled;
+            draft.Projects["folders"]![0]!["automaticBackupMode"] = mode;
             editor.Save(draft, ConfigurationPart.Projects);
             var after = ws.Load(); var next = after.Projects.Single();
-            Assert.AreEqual(enabled, after.AutomaticBidirectionalProjects.Contains(next.ProjectId));
+            Assert.AreEqual(mode switch { "bidirectional" => AutomaticBackupMode.Bidirectional,
+                "download" => AutomaticBackupMode.DownloadOnly, _ => AutomaticBackupMode.UploadOnly }, after.GetAutomaticBackupMode(next.ProjectId));
             Assert.AreEqual(project.MappingVersion, next.MappingVersion);
             Assert.AreEqual(originalMapping.Signature, CloudMapping.Capture(next, after).Signature);
             Assert.AreEqual(originalMapping.Binding, CloudMapping.Bind(next, after));

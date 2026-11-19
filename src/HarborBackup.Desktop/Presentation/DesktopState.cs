@@ -2,6 +2,7 @@ using HarborBackup.Core.Domain;
 using HarborBackup.Desktop.Localization;
 using HarborBackup.Windows.Persistence;
 using HarborBackup.Windows.Integration;
+using HarborBackup.Windows.Persistence.Configuration;
 
 namespace HarborBackup.Desktop.Presentation;
 
@@ -21,12 +22,16 @@ internal sealed record ProjectRow(string Destination, string Source, string Targ
     bool IsLocal = true, string LocalStatus = "", string? CloudFolderId = null, string ProjectId = "")
 {
     public ProjectHealthSnapshot? Health { get; init; }
-    public bool AutomaticBidirectional { get; init; }
-    public string DisplayAutomaticMode => IsLocal ? UiText.Text(AutomaticBidirectional ? "自动双向" : "自动上传") : "—";
+    public AutomaticBackupMode AutomaticMode { get; init; }
+    public bool NeedsInitialization { get; init; }
+    public string DisplayAutomaticMode => IsLocal ? UiText.Text(AutomaticMode switch
+    { AutomaticBackupMode.Bidirectional => "双向备份", AutomaticBackupMode.DownloadOnly => "仅下载", _ => "仅上传" }) : "—";
     public string DisplayResult => UiText.Text(Result);
     public string DisplaySource => IsLocal ? Source : "—";
     public string DisplayLocalStatus => UiText.Text(LocalStatus);
-    public string DisplayProtection => Health is null ? "—" : ProjectHealthPresentation.Summary(Health);
+    public string DisplayProtection => !IsLocal ? "—" : Health is null ? UiText.Text("状态未知") :
+        NeedsInitialization ? UiText.Text("待初始化") : ProjectHealthPresentation.Compact(Health, DateTimeOffset.UtcNow);
+    public string DisplayProtectionDetails => Health is null ? UiText.Text("状态未知") : ProjectHealthPresentation.Summary(Health);
     public string DisplayLastFullSuccess => ProjectHealthPresentation.Time(Health?.LastFullSuccessUtc);
     public string DisplayLastRestoreVerification => Health is null ? "—" : ProjectHealthPresentation.RestoreVerification(Health);
     public string DisplayBacklog => Health is null ? "—" : ProjectHealthPresentation.Backlog(Health);
@@ -73,7 +78,11 @@ internal static class ReportPresentation
         FileAction.Deferred => "延期处理", _ => action.ToString()
     };
     public static string Result(int code) => code switch { 0 => "操作完成", 2 => "有待处理问题", 130 => "已安全停止", _ => "失败" };
-    public static string Mode(string mode) => mode switch { "Backup" => "备份", "Pull" => "取回", "Recover" => "事务恢复", "AutomaticBidirectional" => "自动双向备份", _ => mode };
+    public static string Mode(string mode) => mode switch
+    {
+        "Backup" => "备份", "Pull" => "取回", "Recover" => "事务恢复", "AutomaticBidirectional" => "自动双向备份",
+        "AutomaticUpload" => "自动上传备份", "AutomaticDownload" => "自动下载备份", "AutomaticMixed" => "自动混合备份", _ => mode
+    };
     private static DetailRow PreviewRow(string project, PreviewPlan file, bool pull, bool upload)
     {
         var decision = file.Decision;

@@ -8,7 +8,7 @@ Back up Windows folders to personal OneDrive while preserving file names and dir
 
 - Choose a local folder and a separate cloud destination for each project; preview exclusions and confirm individual uploads or downloads.
 - Manual Backup leaves source files unchanged; Pull leaves cloud contents unchanged. Deletions are never propagated.
-- Enable automatic two-way backup for individual projects; it is off by default. Enabled projects automatically upload local updates and download cloud updates.
+- Choose an automatic backup mode for each project: Upload only (default), Two-way backup or Download only.
 - Compare changes against a common baseline. Changes on both sides require an explicit choice; different contents are protected before replacement, and the baseline advances after verification.
 - Keep the previous ordinary version, with separate conflict copies and recovery materials. Restore current files or the previous archive into an independent folder and verify downloaded contents.
 - Configure backup intervals, pause, transfer/time budgets and upload/download speed limits. Inspect project health, run history and JSON reports.
@@ -23,7 +23,7 @@ Actual controls are populated with synthetic data; no real OneDrive account tran
 
 The current application targets Windows x64 and personal Microsoft OneDrive accounts. It uses C#, .NET 10 and WinForms.
 
-Cloud backups remain ordinary files. This is a file backup tool, without system images, NTFS permissions, alternate data streams or link semantics. Normal comparison and full checks use local hashes and cloud version metadata without downloading cloud file bodies. Pull, permitted automatic two-way download plans, independent restores and restore tests download and verify contents. Ordinary history retains one previous copy, rather than arbitrary point-in-time snapshots.
+Cloud backups remain ordinary files. This is a file backup tool, without system images, NTFS permissions, alternate data streams or link semantics. Normal comparison and full checks use local hashes and cloud version metadata without downloading cloud file bodies. Pull, permitted automatic download plans, independent restores and restore tests download and verify contents. Ordinary history retains one previous copy, rather than arbitrary point-in-time snapshots.
 
 The old 0.4 / PowerShell configuration and data are not imported automatically. See the [user guide](docs/user-guide/onedrive-account.en-US.md) for initialization, upgrades and recovery.
 

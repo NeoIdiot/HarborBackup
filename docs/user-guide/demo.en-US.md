@@ -16,7 +16,7 @@ Saving a project does not establish a common baseline or enable automatic work f
 
 ## 2. Preview the direction and protection plan
 
-Select a project and choose **Preview** for a read-only plan. **Back up selected** opens the upload preview: review the local source, cloud destination, selected files, transfer size and protection of existing contents. Preview does not transfer files. Changes on both sides, or missing common evidence, require an explicit choice. Files whose versions change after preview are skipped for another review.
+Select a project and choose **Preview upload** for a read-only upload plan. **Upload selected** opens the upload preview: review the local source, cloud destination, selected files, transfer size and protection of existing contents. Preview does not transfer files. Changes on both sides, or missing common evidence, require an explicit choice. Files whose versions change after preview are skipped for another review.
 
 <img src="../media/preview.en-US.png" alt="Synthetic upload preview showing selected files, write direction and protection of existing cloud contents" width="840">
 

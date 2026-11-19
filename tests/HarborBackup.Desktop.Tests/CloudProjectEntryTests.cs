@@ -1,4 +1,4 @@
-using HarborBackup.Desktop.Controllers;
+﻿using HarborBackup.Desktop.Controllers;
 using HarborBackup.Desktop.Views;
 using HarborBackup.Windows.Integration;
 using HarborBackup.Windows.Persistence.Configuration;
@@ -42,8 +42,8 @@ public sealed class CloudProjectEntryTests
                         var canStart = bound && !requiresAuthorization;
                         Assert.AreEqual(canStart, join.Enabled);
                         Assert.AreEqual(canStart, retrieve.Enabled);
-                        Assert.IsFalse(((Button)form.Controls.Find("立即备份", true).Single()).Enabled);
-                        Assert.IsFalse(((Button)form.Controls.Find("取回更新…", true).Single()).Enabled);
+                        Assert.IsFalse(((Button)form.Controls.Find("立即运行", true).Single()).Enabled);
+                        Assert.IsFalse(((Button)form.Controls.Find("下载更新…", true).Single()).Enabled);
                         if (canStart)
                         {
                             using var release = new ManualResetEventSlim();

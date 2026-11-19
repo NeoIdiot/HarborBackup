@@ -1220,4 +1220,32 @@
   <data name="创建云端目录" xml:space="preserve"><value>创建云端目录</value></data>
   <data name="创建本地目录" xml:space="preserve"><value>创建本地目录</value></data>
   <data name="AutomaticBackupPaused" xml:space="preserve"><value>后续自动备份已暂停</value></data>
+  <data name="自动备份模式" xml:space="preserve"><value>自动备份模式</value></data>
+  <data name="仅上传" xml:space="preserve"><value>仅上传</value></data>
+  <data name="双向备份" xml:space="preserve"><value>双向备份</value></data>
+  <data name="仅下载" xml:space="preserve"><value>仅下载</value></data>
+  <data name="本地目录" xml:space="preserve"><value>本地目录</value></data>
+  <data name="云端目录（相对 OneDrive 根目录）" xml:space="preserve"><value>云端目录（相对 OneDrive 根目录）</value></data>
+  <data name="仅将本地更新上传到 OneDrive。" xml:space="preserve"><value>仅将本地更新上传到 OneDrive。</value></data>
+  <data name="自动上传本地更新、下载云端更新。" xml:space="preserve"><value>自动上传本地更新、下载云端更新。</value></data>
+  <data name="下载云端更新，不上传本地业务文件。" xml:space="preserve"><value>下载云端更新，不上传本地业务文件。</value></data>
+  <data name="删除不联动；冲突需确认。" xml:space="preserve"><value>删除不联动；冲突需确认。</value></data>
+  <data name="保存仅更新配置。" xml:space="preserve"><value>保存仅更新配置。</value></data>
+  <data name="立即运行" xml:space="preserve"><value>立即运行</value></data>
+  <data name="上传选中" xml:space="preserve"><value>上传选中</value></data>
+  <data name="下载更新…" xml:space="preserve"><value>下载更新…</value></data>
+  <data name="项目 / 云端目录" xml:space="preserve"><value>项目 / 云端目录</value></data>
+  <data name="保护状态" xml:space="preserve"><value>保护状态</value></data>
+  <data name="备份模式" xml:space="preserve"><value>备份模式</value></data>
+  <data name="查看项目状态…" xml:space="preserve"><value>查看项目状态…</value></data>
+  <data name="项目状态" xml:space="preserve"><value>项目状态</value></data>
+  <data name="状态未知" xml:space="preserve"><value>状态未知</value></data>
+  <data name="待初始化" xml:space="preserve"><value>待初始化</value></data>
+  <data name="有待处理项" xml:space="preserve"><value>有待处理项</value></data>
+  <data name="记录较旧" xml:space="preserve"><value>记录较旧</value></data>
+  <data name="尚无完整成功记录" xml:space="preserve"><value>尚无完整成功记录</value></data>
+  <data name="自动上传备份" xml:space="preserve"><value>自动上传备份</value></data>
+  <data name="自动下载备份" xml:space="preserve"><value>自动下载备份</value></data>
+  <data name="自动混合备份" xml:space="preserve"><value>自动混合备份</value></data>
+  <data name="预览上传" xml:space="preserve"><value>预览上传</value></data>
 </root>
