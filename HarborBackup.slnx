@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HarborBackup.Core/HarborBackup.Core.csproj" />
+    <Project Path="src/HarborBackup.OneDrive/HarborBackup.OneDrive.csproj" />
+    <Project Path="src/HarborBackup.Windows/HarborBackup.Windows.csproj" />
+    <Project Path="src/HarborBackup.Cli/HarborBackup.Cli.csproj" />
+    <Project Path="src/HarborBackup.Desktop/HarborBackup.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HarborBackup.Desktop.Tests/HarborBackup.Desktop.Tests.csproj" />
+    <Project Path="tests/HarborBackup.Core.Tests/HarborBackup.Core.Tests.csproj" />
+    <Project Path="tests/HarborBackup.Windows.Tests/HarborBackup.Windows.Tests.csproj" />
+    <Project Path="tests/HarborBackup.Integration.Tests/HarborBackup.Integration.Tests.csproj" />
+  </Folder>
+</Solution>

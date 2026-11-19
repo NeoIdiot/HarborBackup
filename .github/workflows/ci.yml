@@ -1,0 +1,90 @@
+name: Windows synthetic tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-tests:
+    name: Windows / .NET 10 / synthetic tests
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      # An isolated install avoids a newer preinstalled SDK winning global.json's latestPatch selection.
+      DOTNET_INSTALL_DIR: ${{ runner.temp }}/harborbackup-dotnet
+      DOTNET_MULTILEVEL_LOOKUP: '0'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      DOTNET_NOLOGO: '1'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install the tested SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.115'
+
+      - name: Verify SDK selection
+        run: |
+          $actual = (& dotnet --version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $actual -ne '10.0.115') {
+            throw "Expected isolated SDK 10.0.115; selected '$actual'."
+          }
+
+      - name: Run the complete synthetic suite
+        # Restore needs nuget.org. Business tests use synthetic accounts/transports and temporary data.
+        # No production credentials, real OneDrive operations, installer, or release job is configured.
+        run: ./scripts/test/Test.ps1 -Configuration Release -IsolatedProfile
+
+      - name: Summarize synthetic test results
+        if: always()
+        run: |
+          $results = Join-Path $env:GITHUB_WORKSPACE 'artifacts/test-results'
+          $reports = @(Get-ChildItem -Path "$results/run-*/*.trx" -File -ErrorAction SilentlyContinue)
+          $total = 0L; $passed = 0L; $failed = 0L; $notExecuted = 0L
+          foreach ($report in $reports) {
+            [xml]$xml = Get-Content -LiteralPath $report.FullName -Raw
+            $counters = $xml.TestRun.ResultSummary.Counters
+            $total += [long]$counters.total
+            $passed += [long]$counters.passed
+            $failed += [long]$counters.failed
+            $notExecuted += [long]$counters.notExecuted
+          }
+          $completed = @(Get-ChildItem -Path "$results/run-*/completed.json" -File -ErrorAction SilentlyContinue).Count -gt 0
+          $summary = @(
+            '## Windows synthetic verification',
+            '',
+            "TRX reports: $($reports.Count); total: $total; passed: $passed; failed: $failed; not executed: $notExecuted.",
+            "Complete Test.ps1 run recorded: $completed.",
+            '',
+            'These results cover synthetic development tests. They do not establish real-account or installed-release acceptance.'
+          )
+          $summary | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+      - name: Upload synthetic reports only
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: windows-synthetic-reports
+          path: |
+            artifacts/test-results/run-*/*.trx
+            artifacts/test-results/run-*/run-context.json
+            artifacts/test-results/run-*/completed.json
+            artifacts/test-results/run-*/crash-recovery.json
+          if-no-files-found: ignore
+          retention-days: 7
+          include-hidden-files: false

@@ -1,0 +1,80 @@
+name: 问题报告 / Bug report
+description: 报告可复现的问题，使用合成文件并去除隐私信息。 / Report a reproducible issue with sanitized examples.
+title: '[Bug] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        此内容公开可见。请勿粘贴访问/刷新令牌、授权缓存、上传会话或预授权下载 URL、账户/设备标识、真实业务路径和原始文件。只附最小脱敏错误片段，不上传整个 data、日志包或配置目录。
+
+        This report is public. Do not include tokens, credential caches, upload-session or preauthenticated URLs, account/device identifiers, real business paths, or original files. Share only minimal redacted excerpts, never a whole data/config/log directory.
+
+        疑似安全漏洞请先阅读仓库 SECURITY.md，使用私密报告渠道。 / For suspected vulnerabilities, follow SECURITY.md and use private reporting.
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本或提交 / Version or commit
+      description: 安装版填应用版本；源码构建填提交号。 / Give the app version or source commit.
+      placeholder: 0.9.x / commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: entry-point
+    attributes:
+      label: 入口 / Entry point
+      options:
+        - 安装版桌面 / Installed desktop
+        - 安装版 CLI / Installed CLI
+        - 源码构建 / Source build
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境 / Environment
+      description: Windows 版本、界面语言；布局问题补充缩放比例。不要填写用户名或机器名。 / Windows version, UI language, and display scale for layout issues. Omit user and computer names.
+      placeholder: Windows 11, zh-CN, 125%
+    validations:
+      required: true
+  - type: dropdown
+    id: account-type
+    attributes:
+      label: 账户类型 / Account type
+      options:
+        - 无需账户 / No account involved
+        - OneDrive 个人账户 / Personal
+        - OneDrive 工作或学校账户 / Work or school
+        - 合成测试传输 / Synthetic test transport
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 尽量使用独立目录和合成文件描述；用 C:\Example 等替代真实路径。 / Prefer an isolated folder and synthetic files; replace real paths with examples such as C:\Example.
+      placeholder: |
+        1. Create a synthetic file ...
+        2. Run / click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果 / Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果 / Actual behavior
+      description: 可附脱敏错误码和最小截图；截图也应遮去账户、路径和文件名。 / Include redacted error codes or a minimal screenshot with account details, paths, and filenames hidden.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 公开内容检查 / Public-content check
+      options:
+        - label: 我已移除令牌、授权材料、真实路径及其他隐私信息；此报告不包含待私密披露的漏洞细节。 / I removed credentials and personal data; this report contains no private vulnerability details.
+          required: true

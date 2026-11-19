@@ -1,0 +1,20 @@
+{
+  "version": "0.9.17",
+  "oneDriveClientId": "f4c26517-4f12-4120-a3cc-5d0dac90eb57",
+  "runtimeIdentifier": "win-x64",
+  "runtimeVersion": "10.0.14",
+  "innoVersion": "7.1.0",
+  "appId": "HarborBackup.Desktop",
+  "deployment": "self-contained",
+  "trimmed": false,
+  "runtimePacks": [
+    {
+      "id": "microsoft.netcore.app.runtime.win-x64",
+      "sha512": "98B5866A04CFE67EE731F2502365E95D1620BCF727C98BC073C6620DFBA6F1284CD1472B3C3C9F5B82EAA38E54B650870AE7044541D0B8C4C8EB26D5C1E08DF4"
+    },
+    {
+      "id": "microsoft.windowsdesktop.app.runtime.win-x64",
+      "sha512": "1F18F8965673148B2CF5E06DFC42A7C5EB2C5CB8B7FF08FA0B0AEAA7664BD63EF83E683C54CF8865DF41EDB586B7C7E52AB7BBCFA709C28458E58A7026A5F8E1"
+    }
+  ]
+}

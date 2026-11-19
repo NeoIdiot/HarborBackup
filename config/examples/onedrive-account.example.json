@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "enabled": false,
+  "clientId": "",
+  "accountId": null,
+  "accountName": null,
+  "driveId": null,
+  "rootId": null,
+  "rootName": "HarborBackup",
+  "repositoryId": null,
+  "archiveRetention": "OnlineOnly",
+  "conflictRetention": "OnlineOnly",
+  "folders": { "archives": "archives", "conflicts": "conflicts", "metadata": "metadata" }
+}

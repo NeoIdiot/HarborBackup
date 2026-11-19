@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
+    <ApplicationIcon>Assets/HarborBackup.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/HarborBackup.ico" />
+    <ProjectReference Include="../HarborBackup.Core/HarborBackup.Core.csproj" />
+    <ProjectReference Include="../HarborBackup.Windows/HarborBackup.Windows.csproj" />
+  </ItemGroup>
+</Project>

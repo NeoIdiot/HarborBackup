@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      actions-minor-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  - package-ecosystem: nuget
+    # Target project manifests directly, including helpers outside the solution.
+    directories:
+      - /src/*
+      - /tests/*
+      - /scripts/test/CrashRecovery
+      - /scripts/test/OneDriveFlow
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      nuget-minor-patch:
+        patterns: ['*']
+        update-types: [minor, patch]

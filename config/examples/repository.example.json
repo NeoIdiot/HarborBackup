@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "repositoryId": "11111111111111111111111111111111",
+  "folders": {
+    "archives": "archives",
+    "conflicts": "conflicts",
+    "metadata": "metadata"
+  }
+}

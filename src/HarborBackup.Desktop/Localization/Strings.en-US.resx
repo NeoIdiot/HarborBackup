@@ -1,0 +1,1213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="概览" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="备份项目" xml:space="preserve">
+    <value>Projects</value>
+  </data>
+  <data name="运行记录" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="待处理问题" xml:space="preserve">
+    <value>Issues</value>
+  </data>
+  <data name="设置" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="退出程序" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="HarborBackup · 泊岸备份" xml:space="preserve">
+    <value>HarborBackup</value>
+  </data>
+  <data name="HarborBackup / {0}" xml:space="preserve">
+    <value>HarborBackup / {0}</value>
+  </data>
+  <data name="泊岸备份" xml:space="preserve">
+    <value>Local backup</value>
+  </data>
+  <data name="立即备份" xml:space="preserve">
+    <value>Back up now</value>
+  </data>
+  <data name="暂停自动备份" xml:space="preserve">
+    <value>Pause schedule</value>
+  </data>
+  <data name="恢复自动备份" xml:space="preserve">
+    <value>Resume schedule</value>
+  </data>
+  <data name="停止当前操作" xml:space="preserve">
+    <value>Stop operation</value>
+  </data>
+  <data name="当前状态" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="上次运行结束" xml:space="preserve">
+    <value>Last completed</value>
+  </data>
+  <data name="下次自动备份" xml:space="preserve">
+    <value>Next backup</value>
+  </data>
+  <data name="尚未运行" xml:space="preserve">
+    <value>Never run</value>
+  </data>
+  <data name="尚未安排" xml:space="preserve">
+    <value>Not scheduled</value>
+  </data>
+  <data name="正在加载" xml:space="preserve">
+    <value>Loading</value>
+  </data>
+  <data name="项目 / 目标相对路径" xml:space="preserve">
+    <value>Project / relative target</value>
+  </data>
+  <data name="本地源目录" xml:space="preserve">
+    <value>Source folder</value>
+  </data>
+  <data name="实际目标" xml:space="preserve">
+    <value>Target folder</value>
+  </data>
+  <data name="最近结果" xml:space="preserve">
+    <value>Last result</value>
+  </data>
+  <data name="源目录" xml:space="preserve">
+    <value>Source folder</value>
+  </data>
+  <data name="结束时间" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="操作" xml:space="preserve">
+    <value>Operation</value>
+  </data>
+  <data name="结果" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="日志文件" xml:space="preserve">
+    <value>Log file</value>
+  </data>
+  <data name="项目" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="相对路径" xml:space="preserve">
+    <value>Relative path</value>
+  </data>
+  <data name="动作" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="详情" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="说明" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="计划动作" xml:space="preserve">
+    <value>Planned action</value>
+  </data>
+  <data name="还没有备份项目" xml:space="preserve">
+    <value>No projects yet</value>
+  </data>
+  <data name="在备份项目页添加需要保护的文件夹。" xml:space="preserve">
+    <value>Add a folder on the Projects page.</value>
+  </data>
+  <data name="添加第一个备份项目" xml:space="preserve">
+    <value>Add your first project</value>
+  </data>
+  <data name="选择本地源目录和 OneDrive 中的目标路径。保存前可以预览。" xml:space="preserve">
+    <value>Choose a source folder and a target in OneDrive.</value>
+  </data>
+  <data name="更多操作  ▾" xml:space="preserve">
+    <value>More  ▾</value>
+  </data>
+  <data name="完整核查（只读）" xml:space="preserve">
+    <value>Full check (read only)</value>
+  </data>
+  <data name="核查并备份" xml:space="preserve">
+    <value>Check and back up</value>
+  </data>
+  <data name="移除项目…" xml:space="preserve">
+    <value>Remove project…</value>
+  </data>
+  <data name="预览选中" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="备份选中" xml:space="preserve">
+    <value>Back up selected</value>
+  </data>
+  <data name="取回更新…" xml:space="preserve">
+    <value>Retrieve updates…</value>
+  </data>
+  <data name="添加项目" xml:space="preserve">
+    <value>Add project</value>
+  </data>
+  <data name="编辑选中" xml:space="preserve">
+    <value>Edit selected</value>
+  </data>
+  <data name="全局排除" xml:space="preserve">
+    <value>Global exclusions</value>
+  </data>
+  <data name="没有匹配的运行记录" xml:space="preserve">
+    <value>No matching history</value>
+  </data>
+  <data name="运行完成后会在这里记录结果。也可以清除筛选条件，查看已有记录。" xml:space="preserve">
+    <value>Completed operations appear here. Try clearing the filters.</value>
+  </data>
+  <data name="全部结果" xml:space="preserve">
+    <value>All results</value>
+  </data>
+  <data name="完成" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="有待处理" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="失败" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="取消" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="起始日期" xml:space="preserve">
+    <value>Since</value>
+  </data>
+  <data name="按项目筛选记录…" xml:space="preserve">
+    <value>Filter by project…</value>
+  </data>
+  <data name="按项目筛选记录" xml:space="preserve">
+    <value>Filter by project</value>
+  </data>
+  <data name="运行结果筛选" xml:space="preserve">
+    <value>Result filter</value>
+  </data>
+  <data name="起始日期筛选" xml:space="preserve">
+    <value>Start date filter</value>
+  </data>
+  <data name="刷新记录" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="查看选中详情" xml:space="preserve">
+    <value>View details</value>
+  </data>
+  <data name="打开日志目录" xml:space="preserve">
+    <value>Open logs</value>
+  </data>
+  <data name="日志" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="读取错误" xml:space="preserve">
+    <value>Read error</value>
+  </data>
+  <data name="当前视图没有待处理条目" xml:space="preserve">
+    <value>No items in this view</value>
+  </data>
+  <data name="可切换全部动作或调整筛选条件；完整结果以运行日志为准。" xml:space="preserve">
+    <value>Show all actions or change the filter. See logs for full results.</value>
+  </data>
+  <data name="打开冲突目录" xml:space="preserve">
+    <value>Open conflicts</value>
+  </data>
+  <data name="打开归档目录" xml:space="preserve">
+    <value>Open archives</value>
+  </data>
+  <data name="恢复未完成事务" xml:space="preserve">
+    <value>Recover transactions</value>
+  </data>
+  <data name="仅看待处理" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="显示全部动作" xml:space="preserve">
+    <value>All actions</value>
+  </data>
+  <data name="筛选项目、路径、动作或错误…" xml:space="preserve">
+    <value>Filter by project, path, action or error…</value>
+  </data>
+  <data name="筛选项目、路径、动作或错误" xml:space="preserve">
+    <value>Filter by project, path, action or error</value>
+  </data>
+  <data name="设置备份位置" xml:space="preserve">
+    <value>Choose backup location</value>
+  </data>
+  <data name="添加第一个项目" xml:space="preserve">
+    <value>Add first project</value>
+  </data>
+  <data name="选择备份位置" xml:space="preserve">
+    <value>Choose a location</value>
+  </data>
+  <data name="添加备份项目" xml:space="preserve">
+    <value>Add a project</value>
+  </data>
+  <data name="预览，然后备份" xml:space="preserve">
+    <value>Preview and back up</value>
+  </data>
+  <data name="开始备份" xml:space="preserve">
+    <value>Get started</value>
+  </data>
+  <data name="选择备份位置，然后添加项目。" xml:space="preserve">
+    <value>Choose a backup location, then add a project.</value>
+  </data>
+  <data name="备份位置已就绪，请添加项目。" xml:space="preserve">
+    <value>Your backup location is ready. Add a project.</value>
+  </data>
+  <data name="备份项目（{0}）" xml:space="preserve">
+    <value>Projects ({0})</value>
+  </data>
+  <data name="显示 {0} / {1} 项" xml:space="preserve">
+    <value>Showing {0} of {1} items</value>
+  </data>
+  <data name="{0} 个项目 · {1} 项待处理" xml:space="preserve">
+    <value>{0} projects · {1} items to review</value>
+  </data>
+  <data name="{0} · 云端上传未验证" xml:space="preserve">
+    <value>{0} · Cloud upload unverified</value>
+  </data>
+  <data name="{0} / {1} · {2}/{3} · 哈希 {4:F1} MiB" xml:space="preserve">
+    <value>{0} / {1} · {2}/{3} · Hashed {4:F1} MiB</value>
+  </data>
+  <data name="正在处理，请稍候…" xml:space="preserve">
+    <value>Working…</value>
+  </data>
+  <data name="项目配置已变化，请刷新后重试。" xml:space="preserve">
+    <value>The project configuration changed. Refresh and try again.</value>
+  </data>
+  <data name="项目已变化，请刷新后重试。" xml:space="preserve">
+    <value>The project changed. Refresh and try again.</value>
+  </data>
+  <data name="移除项目" xml:space="preserve">
+    <value>Remove project</value>
+  </data>
+  <data name="请先选择一个备份项目。" xml:space="preserve">
+    <value>Select a project first.</value>
+  </data>
+  <data name="目录尚未创建。" xml:space="preserve">
+    <value>The folder has not been created.</value>
+  </data>
+  <data name="设置页有未保存的修改。退出并放弃这些修改？" xml:space="preserve">
+    <value>Settings have unsaved changes. Exit and discard them?</value>
+  </data>
+  <data name="界面" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="语言" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="帮助" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="本机与存储" xml:space="preserve">
+    <value>This device &amp; storage</value>
+  </data>
+  <data name="OneDrive 根目录" xml:space="preserve">
+    <value>OneDrive folder</value>
+  </data>
+  <data name="登录时启动" xml:space="preserve">
+    <value>Start at sign-in</value>
+  </data>
+  <data name="启用" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="关闭" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="自动备份" xml:space="preserve">
+    <value>Automatic backup</value>
+  </data>
+  <data name="备份间隔" xml:space="preserve">
+    <value>Backup interval</value>
+  </data>
+  <data name="登录后启动延迟" xml:space="preserve">
+    <value>Startup delay</value>
+  </data>
+  <data name="单轮运行时限" xml:space="preserve">
+    <value>Operation time limit</value>
+  </data>
+  <data name="分钟" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="天" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="校验与容错" xml:space="preserve">
+    <value>Verification &amp; errors</value>
+  </data>
+  <data name="完整哈希核查" xml:space="preserve"><value>Full local hash check</value></data>
+  <data name="哈希缓存" xml:space="preserve">
+    <value>Hash cache</value>
+  </data>
+  <data name="单个项目失败" xml:space="preserve">
+    <value>If a project fails</value>
+  </data>
+  <data name="继续其他项目" xml:space="preserve">
+    <value>Continue other projects</value>
+  </data>
+  <data name="高级配置" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="JSON 配置文件" xml:space="preserve">
+    <value>JSON configuration</value>
+  </data>
+  <data name="项目配置" xml:space="preserve">
+    <value>Projects file</value>
+  </data>
+  <data name="系统配置" xml:space="preserve">
+    <value>Settings file</value>
+  </data>
+  <data name="保存备份设置" xml:space="preserve">
+    <value>Save settings</value>
+  </data>
+  <data name="重新加载" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="放弃本页未保存的修改并重新加载？" xml:space="preserve">
+    <value>Discard unsaved changes on this page and reload?</value>
+  </data>
+  <data name="有未保存的修改" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="未设置" xml:space="preserve">
+    <value>Not set</value>
+  </data>
+  <data name="已启用" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="未启用" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="设置已保存" xml:space="preserve">
+    <value>Settings saved</value>
+  </data>
+  <data name="配置尚未保存，请先添加项目或保存设置。" xml:space="preserve">
+    <value>No configuration has been saved. Add a project or save settings first.</value>
+  </data>
+  <data name="全局排除规则" xml:space="preserve">
+    <value>Global exclusions</value>
+  </data>
+  <data name="编辑备份项目" xml:space="preserve">
+    <value>Edit project</value>
+  </data>
+  <data name="目标相对路径" xml:space="preserve">
+    <value>Relative target path</value>
+  </data>
+  <data name="排除目录，每行一项" xml:space="preserve">
+    <value>Excluded folders, one per line</value>
+  </data>
+  <data name="排除文件，每行一项" xml:space="preserve">
+    <value>Excluded files, one per line</value>
+  </data>
+  <data name="浏览…" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="选择文件夹，或输入包含环境变量的路径" xml:space="preserve">
+    <value>Choose a folder or enter a path with environment variables</value>
+  </data>
+  <data name="OneDrive 下的目标相对路径" xml:space="preserve">
+    <value>Target path relative to OneDrive</value>
+  </data>
+  <data name="例如 Projects/MyProject" xml:space="preserve">
+    <value>e.g. Projects/MyProject</value>
+  </data>
+  <data name="排除目录" xml:space="preserve">
+    <value>Excluded folders</value>
+  </data>
+  <data name="排除文件" xml:space="preserve">
+    <value>Excluded files</value>
+  </data>
+  <data name="对所有项目生效" xml:space="preserve">
+    <value>Applies to all projects</value>
+  </data>
+  <data name="项目排除规则" xml:space="preserve">
+    <value>Project exclusions</value>
+  </data>
+  <data name="保存后加入自动备份" xml:space="preserve">
+    <value>Saving adds this project to the schedule</value>
+  </data>
+  <data name="检查配置" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="预览草稿" xml:space="preserve">
+    <value>Preview draft</value>
+  </data>
+  <data name="保存配置" xml:space="preserve">
+    <value>Save project</value>
+  </data>
+  <data name="请先在设置中选择 OneDrive 根目录" xml:space="preserve">
+    <value>Choose the OneDrive folder in Settings first</value>
+  </data>
+  <data name="请输入有效的目标相对路径" xml:space="preserve">
+    <value>Enter a valid relative target path</value>
+  </data>
+  <data name="正在校验…" xml:space="preserve">
+    <value>Validating…</value>
+  </data>
+  <data name="配置有效；尚未保存。" xml:space="preserve">
+    <value>Valid configuration. Not saved yet.</value>
+  </data>
+  <data name="修改仅保存在草稿中。" xml:space="preserve">
+    <value>Changes are in the draft only.</value>
+  </data>
+  <data name="源或目标映射将改变。后续运行将按新映射建立观察；旧文件和保护材料会保留。是否保存？" xml:space="preserve">
+    <value>The source or target mapping will change. Future operations will use this mapping; existing files and recovery evidence will be kept. Save?</value>
+  </data>
+  <data name="确认项目映射" xml:space="preserve">
+    <value>Confirm mapping</value>
+  </data>
+  <data name="取回预览 · 请核对写入方向" xml:space="preserve">
+    <value>Retrieve preview · Check the write direction</value>
+  </data>
+  <data name="只读预览" xml:space="preserve">
+    <value>Read-only preview</value>
+  </data>
+  <data name="只读预览，不修改文件或状态。" xml:space="preserve">
+    <value>Read-only preview. Files and state are unchanged.</value>
+  </data>
+  <data name="按此项目执行取回" xml:space="preserve">
+    <value>Retrieve this project</value>
+  </data>
+  <data name="正在加载配置" xml:space="preserve">
+    <value>Loading configuration</value>
+  </data>
+  <data name="空闲" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+  <data name="本地处理完成" xml:space="preserve">
+    <value>Local copy completed</value>
+  </data>
+  <data name="有待处理问题" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="已停止" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="配置尚未创建或目录不可用。请先检查设置中的 OneDrive 根目录，再添加备份项目。" xml:space="preserve">
+    <value>Configuration or a required folder is missing. Check the OneDrive folder in Settings, then add a project.</value>
+  </data>
+  <data name="配置" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="配置错误" xml:space="preserve">
+    <value>Configuration error</value>
+  </data>
+  <data name="尚未配置" xml:space="preserve">
+    <value>Not configured</value>
+  </data>
+  <data name="请检查配置" xml:space="preserve">
+    <value>Check configuration</value>
+  </data>
+  <data name="请先配置项目" xml:space="preserve">
+    <value>Add a project</value>
+  </data>
+  <data name="已暂停" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="正在扫描" xml:space="preserve">
+    <value>Scanning</value>
+  </data>
+  <data name="恢复检查" xml:space="preserve">
+    <value>Checking recovery</value>
+  </data>
+  <data name="正在处理文件" xml:space="preserve">
+    <value>Processing files</value>
+  </data>
+  <data name="正在预览 / 核查" xml:space="preserve">
+    <value>Previewing / verifying</value>
+  </data>
+  <data name="正在运行" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="已安全停止" xml:space="preserve">
+    <value>Stopped safely</value>
+  </data>
+  <data name="运行失败" xml:space="preserve">
+    <value>Operation failed</value>
+  </data>
+  <data name="运行" xml:space="preserve">
+    <value>Operation</value>
+  </data>
+  <data name="正在执行操作，请等待当前任务安全结束后再应用配置。" xml:space="preserve">
+    <value>Wait for the active operation to finish before applying configuration.</value>
+  </data>
+  <data name="任务繁忙。" xml:space="preserve">
+    <value>An operation is in progress.</value>
+  </data>
+  <data name="正在停止，等待安全边界" xml:space="preserve">
+    <value>Stopping safely</value>
+  </data>
+  <data name="正在安全退出" xml:space="preserve">
+    <value>Exiting safely</value>
+  </data>
+  <data name="打开主窗口" xml:space="preserve">
+    <value>Open HarborBackup</value>
+  </data>
+  <data name="暂停后续自动备份" xml:space="preserve">
+    <value>Pause scheduled backups</value>
+  </data>
+  <data name="预览 / 取回更新…" xml:space="preserve">
+    <value>Preview / retrieve updates…</value>
+  </data>
+  <data name="完整哈希核查（只读）" xml:space="preserve"><value>Full local hash check (read only)</value></data>
+  <data name="退出并停止本机自动备份" xml:space="preserve">
+    <value>Exit and stop local scheduled backups</value>
+  </data>
+  <data name="状态：{0}" xml:space="preserve">
+    <value>Status: {0}</value>
+  </data>
+  <data name="后续自动备份已暂停" xml:space="preserve">
+    <value>Scheduled backups paused</value>
+  </data>
+  <data name="下次备份：{0}" xml:space="preserve">
+    <value>Next backup: {0}</value>
+  </data>
+  <data name="请在待处理问题或运行记录中查看详情。" xml:space="preserve">
+    <value>See Issues or Run History for details.</value>
+  </data>
+  <data name="HarborBackup 仍在后台运行" xml:space="preserve">
+    <value>HarborBackup is still running</value>
+  </data>
+  <data name="关闭主窗口不会停止备份。退出程序请使用托盘菜单。" xml:space="preserve">
+    <value>Closing the window keeps backups running. Use the tray menu to exit.</value>
+  </data>
+  <data name="HarborBackup · 等待当前事务安全结束" xml:space="preserve">
+    <value>HarborBackup · Waiting for a safe exit</value>
+  </data>
+  <data name="HarborBackup 无法启动" xml:space="preserve">
+    <value>HarborBackup could not start</value>
+  </data>
+  <data name="复制" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="内容一致" xml:space="preserve">
+    <value>Identical</value>
+  </data>
+  <data name="创建目录" xml:space="preserve">
+    <value>Create folder</value>
+  </data>
+  <data name="目录" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="两端缺失" xml:space="preserve">
+    <value>Missing on both sides</value>
+  </data>
+  <data name="待取回" xml:space="preserve">
+    <value>Retrieve needed</value>
+  </data>
+  <data name="待备份" xml:space="preserve">
+    <value>Backup needed</value>
+  </data>
+  <data name="内容冲突" xml:space="preserve">
+    <value>Content conflict</value>
+  </data>
+  <data name="类型冲突" xml:space="preserve">
+    <value>Type conflict</value>
+  </data>
+  <data name="延期处理" xml:space="preserve">
+    <value>Deferred</value>
+  </data>
+  <data name="备份" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+  <data name="取回" xml:space="preserve">
+    <value>Retrieve</value>
+  </data>
+  <data name="事务恢复" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="已完成本地写入" xml:space="preserve">
+    <value>Local write completed</value>
+  </data>
+  <data name="未改写业务文件" xml:space="preserve">
+    <value>No business files changed</value>
+  </data>
+  <data name="{0}；保护：{1}/{2} {3} {4}" xml:space="preserve">
+    <value>{0}; protection: {1}/{2} {3} {4}</value>
+  </data>
+  <data name="HelpContent" xml:space="preserve"><value>Backup location
+Choose a separate cloud folder per project, or enter a path relative to OneDrive root, such as Projects/DROP_CODE. Original file names and subdirectories are used directly.
+The HarborBackup management folder contains metadata, archives and conflicts only. Other devices use the same management folder and project target through the authorized account.
+
+Comparison and conflicts
+Cloud comparisons use metadata, item identities, version tags and checksums without downloading file contents. Files without trusted metadata are skipped by normal backup and pull. Use More actions > Retrieve and establish baseline to review them separately. Only checked preview items run, and changed versions are skipped.
+Retrieve cloud project selects a cloud project and this PC's folder, then adds the mapping and retrieves files after preview confirmation.
+Divergent edits keep both versions for explicit resolution. Backup does not change the source; Pull does not change cloud file contents. Deletions are not propagated.
+
+History
+Only the previous ordinary version is retained. Older history is removed after a verified commit. Unresolved conflicts and unfinished recovery evidence are excluded from this cleanup. Online-only protection does not download copies; Keep local does.
+
+Scheduling and cache
+Repeated triggers are skipped while a run is active. Startup delay and run time limit are configurable. Stop finishes at a safe boundary.
+Local hash cache uses size and UTC modification time. Full checks hash local content only; cloud comparisons still read metadata only.
+
+Configuration and logs
+Built-in global rules are unchecked by default and combine with global custom and project exclusions. Patterns are shown next to each option. File name patterns match at any depth, ignoring case. Word pattern ~$*.docx does not match ~plan.docx; enter ~*.docx manually for a broader match. Unchecking a preset preserves matching manual rules. Exclusions do not delete existing files, history or recovery evidence. Save edited settings; account and login startup settings apply separately. Language is device-local.
+Log and history retention affect diagnostics and displayed records, not backup contents. Open logs from Run history. JSON configuration shortcuts are at the bottom of Settings.
+Closing the window leaves the tray running. Exiting stops this device&apos;s scheduled backups.</value></data>
+  <data name="停用" xml:space="preserve">
+    <value>Disable</value>
+  </data>
+  <data name="存储位置" xml:space="preserve">
+    <value>Storage locations</value>
+  </data>
+  <data name="软件目录" xml:space="preserve">
+    <value>Application directory</value>
+  </data>
+  <data name="配置目录" xml:space="preserve">
+    <value>Configuration directory</value>
+  </data>
+  <data name="日志目录" xml:space="preserve">
+    <value>Log directory</value>
+  </data>
+  <data name="历史版本目录" xml:space="preserve">
+    <value>Archived versions</value>
+  </data>
+  <data name="冲突目录" xml:space="preserve">
+    <value>Conflict copies</value>
+  </data>
+  <data name="打开目录" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="可重建缓存" xml:space="preserve">
+    <value>Rebuildable cache</value>
+  </data>
+  <data name="统计占用" xml:space="preserve">
+    <value>Measure size</value>
+  </data>
+  <data name="清理缓存" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="已清理 {0} MiB" xml:space="preserve">
+    <value>Cleared {0} MiB</value>
+  </data>
+  <data name="共同版本" xml:space="preserve"><value>Common version</value></data>
+  <data name="共享元信息目录" xml:space="preserve"><value>Shared metadata folder</value></data>
+  <data name="观察时间" xml:space="preserve"><value>Observed at</value></data>
+  <data name="解决选中文件冲突" xml:space="preserve"><value>Resolve selected file</value></data>
+  <data name="目标版本" xml:space="preserve"><value>Target version</value></data>
+  <data name="筛选设备、项目或文件…" xml:space="preserve"><value>Filter device, project or file…</value></data>
+  <data name="设备" xml:space="preserve"><value>Device</value></data>
+  <data name="设备文件状态" xml:space="preserve"><value>Device file status</value></data>
+  <data name="源版本" xml:space="preserve"><value>Source version</value></data>
+  <data name="BothChangedSinceBaseline" xml:space="preserve"><value>Both sides changed since the common version</value></data>
+  <data name="ConflictUnresolved" xml:space="preserve"><value>Conflict; choice required</value></data>
+  <data name="Copy" xml:space="preserve"><value>Copied</value></data>
+  <data name="Deferred" xml:space="preserve"><value>Deferred</value></data>
+  <data name="Equal" xml:space="preserve"><value>Same content</value></data>
+  <data name="NeedsPull" xml:space="preserve"><value>Retrieve needed</value></data>
+  <data name="NeedsPush" xml:space="preserve"><value>Backup needed</value></data>
+  <data name="Observed" xml:space="preserve"><value>Observed; not yet completed</value></data>
+  <data name="OneSideChangedSinceBaseline" xml:space="preserve"><value>One side changed since the common version</value></data>
+  <data name="OppositeSideChangedSinceBaseline" xml:space="preserve"><value>The opposite side changed since the common version</value></data>
+  <data name="SourceOnly" xml:space="preserve"><value>Source only</value></data>
+  <data name="TargetOnly" xml:space="preserve"><value>Target only</value></data>
+  <data name="历史版本本机保留" xml:space="preserve"><value>Previous version local retention</value></data>
+  <data name="冲突副本本机保留" xml:space="preserve"><value>Conflict copies on this device</value></data>
+  <data name="文件保留状态" xml:space="preserve"><value>File availability</value></data>
+  <data name="应用到已有副本" xml:space="preserve"><value>Apply to existing copies</value></data>
+  <data name="Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="OneDrive 账户连接"><value>OneDrive account</value></data>
+  <data name="应用 Client ID"><value>Application Client ID</value></data>
+  <data name="已连接账户"><value>Connected account</value></data>
+  <data name="账户操作"><value>Account</value></data>
+  <data name="连接 OneDrive"><value>Connect OneDrive</value></data>
+  <data name="断开连接"><value>Disconnect</value></data>
+  <data name="已断开，自动任务等待重新授权。"><value>Disconnected. Scheduled tasks are waiting for authorization.</value></data>
+  <data name="云端父目录"><value>Cloud parent folder</value></data>
+  <data name="云端文件夹"><value>Cloud folders</value></data>
+  <data name="浏览云端"><value>Browse cloud</value></data>
+  <data name="上一级"><value>Up</value></data>
+  <data name="仓库文件夹名称"><value>Repository folder name</value></data>
+  <data name="云端存储"><value>Cloud storage</value></data>
+  <data name="使用此云端仓库"><value>Use this cloud repository</value></data>
+  <data name="请先连接并浏览云端目录。"><value>Connect an account and browse its folders first.</value></data>
+  <data name="账户直连已启用。项目目标现在指向云端仓库。"><value>Account transport enabled. Project destinations now point to this cloud repository.</value></data>
+  <data name="仅云端保留"><value>Cloud only</value></data>
+  <data name="同时保留本地"><value>Also keep locally</value></data>
+  <data name="保存保留策略"><value>Save retention policy</value></data>
+  <data name="尚未连接"><value>Not connected</value></data>
+  <data name="管理账户与云端仓库" xml:space="preserve"><value>Account and management folder</value></data>
+  <data name="{0} · OneDrive 账户直连"><value>{0} · OneDrive account transport</value></data>
+  <data name="云端操作已完成"><value>Cloud operations completed</value></data>
+  <data name="选择要保留的版本"><value>Choose the version to keep</value></data>
+  <data name="未选择的版本会保留到冲突目录。版本变化时操作将停止。"><value>Other versions remain protected. The operation stops if the versions change.</value></data>
+  <data name="本机版本"><value>Local version</value></data>
+  <data name="云端版本"><value>Cloud version</value></data>
+  <data name="确认选择"><value>Confirm selection</value></data>
+  <data name="云端版本记录"><value>Cloud revision records</value></data>
+  <data name="加入云端项目"><value>Join cloud project</value></data>
+  <data name="ConcurrentCloudVersions"><value>Concurrent cloud versions</value></data>
+  <data name="NoCommonCloudBaseline"><value>No common cloud baseline</value></data>
+  <data name="云端子目录" xml:space="preserve"><value>Cloud subfolders</value></data>
+  <data name="设置云端子目录" xml:space="preserve"><value>Configure cloud subfolders</value></data>
+  <data name="备份目录" xml:space="preserve"><value>Backup folder</value></data>
+  <data name="请先连接 OneDrive 账户并选择云端仓库。" xml:space="preserve"><value>Connect a OneDrive account and select a cloud repository first.</value></data>
+  <data name="账户已连接，请添加或加入备份项目。" xml:space="preserve"><value>Account connected. Add or join a backup project.</value></data>
+  <data name="保存" xml:space="preserve"><value>Save</value></data>
+  <data name="从备份配置移除 {0}？&#xA;源、目标和历史保护文件都会保留。" xml:space="preserve">
+    <value>Remove {0} from the configuration?
+Source, target and archived files will be kept.</value>
+  </data>
+  <data name="全局规则&#xA;目录：{0}&#xA;文件：{1}" xml:space="preserve">
+    <value>Global rules
+Folders: {0}
+Files: {1}</value>
+  </data>
+  <data name="读取目标：{0}&#xA;写入本地源：{1}&#xA;执行前重新核验，覆盖前归档。" xml:space="preserve">
+    <value>Read from target: {0}
+Write to local source: {1}
+Files are rechecked before execution and archived before replacement.</value>
+  </data>
+  <data name="高级设置"><value>Advanced settings</value></data>
+  <data name="展开 / 收起"><value>Show / hide</value></data>
+  <data name="使用自定义应用 Client ID"><value>Use a custom application Client ID</value></data>
+  <data name="请输入有效的自定义 Client ID。"><value>Enter a valid custom Client ID.</value></data>
+  <data name="此开发构建尚未配置默认登录应用，请联系发布者或在高级设置中使用自己的应用。"><value>This development build has no default sign-in application. Contact the publisher or use your own application in Advanced settings.</value></data>
+  <data name="已保存仓库" xml:space="preserve"><value>Saved management folder</value></data>
+  <data name="创建新仓库" xml:space="preserve"><value>Create management folder</value></data>
+  <data name="使用已有文件夹"><value>Use an existing folder</value></data>
+  <data name="仓库选择方式" xml:space="preserve"><value>Management folder selection</value></data>
+  <data name="当前浏览位置"><value>Browsing location</value></data>
+  <data name="使用当前文件夹"><value>Use current folder</value></data>
+  <data name="新仓库文件夹名称" xml:space="preserve"><value>New management folder name</value></data>
+  <data name="将使用的云端位置"><value>Selected cloud location</value></data>
+  <data name="应用云端存储设置"><value>Apply cloud storage settings</value></data>
+  <data name="云端仓库和保留策略已保存。" xml:space="preserve"><value>Management folder and retention policies saved.</value></data>
+  <data name="请选择仓库文件夹。"><value>Select a repository folder.</value></data>
+  <data name="正在连接账户…"><value>Connecting account…</value></data>
+  <data name="正在断开连接…"><value>Disconnecting…</value></data>
+  <data name="正在读取云端目录…"><value>Loading cloud folders…</value></data>
+  <data name="正在应用云端存储设置…"><value>Applying cloud storage settings…</value></data>
+  <data name="正在加载账户设置…"><value>Loading account settings…</value></data>
+  <data name="未加载"><value>Not loaded</value></data>
+  <data name="已连接，待选择云端仓库"><value>Connected — choose a repository</value></data>
+  <data name="需要重新授权"><value>Sign-in required</value></data>
+  <data name="操作已取消，已保存的设置保持不变。"><value>Operation cancelled. Saved settings are unchanged.</value></data>
+  <data name="操作未完成，请查看详情。"><value>Operation did not complete. View details.</value></data>
+  <data name="Choose an empty folder or an existing account-mode repository."><value>Choose an empty folder or an existing account-mode repository.</value></data>
+  <data name="Connect an account first."><value>Connect an account first.</value></data>
+  <data name="Enter a single repository folder name."><value>Enter a single repository folder name.</value></data>
+  <data name="Unsupported repository identity."><value>Unsupported repository identity.</value></data>
+  <data name="OneDrive settings changed. Reload before saving."><value>OneDrive settings changed. Reload before saving.</value></data>
+  <data name="Connect OneDrive and bind a cloud repository before saving projects."><value>Connect OneDrive and bind a cloud repository before saving projects.</value></data>
+  <data name="Cloud repository root is not a folder."><value>Cloud repository root is not a folder.</value></data>
+  <data name="查看详情"><value>View details</value></data>
+  <data name="关闭窗口"><value>Close</value></data>
+  <data name="云端存储设置未保存，请查看详情。"><value>Cloud storage settings were not saved. View details.</value></data>
+  <data name="账户连接未完成，请查看详情。"><value>Account connection did not complete. View details.</value></data>
+  <data name="无法读取云端目录，请查看详情。"><value>Could not load cloud folders. View details.</value></data>
+  <data name="待选择云端仓库"><value>Choose a cloud repository</value></data>
+  <data name="Create upload session" xml:space="preserve"><value>Create upload session</value></data>
+  <data name="Create cloud folder" xml:space="preserve"><value>Create cloud folder</value></data>
+  <data name="List cloud folders" xml:space="preserve"><value>List cloud folders</value></data>
+  <data name="Copy cloud file" xml:space="preserve"><value>Copy cloud file</value></data>
+  <data name="Read cloud changes" xml:space="preserve"><value>Read cloud changes</value></data>
+  <data name="Upload file content" xml:space="preserve"><value>Upload file content</value></data>
+  <data name="Download file content" xml:space="preserve"><value>Download file content</value></data>
+  <data name="Check cloud transfer" xml:space="preserve"><value>Check cloud transfer</value></data>
+  <data name="Read cloud item" xml:space="preserve"><value>Read cloud item</value></data>
+  <data name="Publish uploaded file" xml:space="preserve"><value>Publish uploaded file</value></data>
+  <data name="OneDrive 请求失败。&#10;操作：{0}&#10;HTTP：{1}&#10;错误代码：{2}&#10;请求 ID：{3}" xml:space="preserve"><value>OneDrive request failed.&#10;Operation: {0}&#10;HTTP: {1}&#10;Error code: {2}&#10;Request ID: {3}</value></data>
+  <data name="未提供" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="记录保留" xml:space="preserve"><value>Record retention</value></data>
+  <data name="日志保留时间" xml:space="preserve"><value>Log retention</value></data>
+  <data name="运行记录保留时间" xml:space="preserve"><value>Run history retention</value></data>
+  <data name="选择云端备份目录" xml:space="preserve"><value>Choose cloud backup folder</value></data>
+  <data name="云端目标目录（相对 OneDrive 根目录）" xml:space="preserve"><value>Cloud destination (relative to OneDrive root)</value></data>
+  <data name="浏览云端…" xml:space="preserve"><value>Browse cloud…</value></data>
+  <data name="可选：在当前位置新建子目录" xml:space="preserve"><value>Optional: new subfolder at this location</value></data>
+  <data name="CloudMetadataRequired" xml:space="preserve"><value>Trusted cloud metadata is missing. The file was preserved. Choose a version in the upload or pull preview.</value></data>
+  <data name="ExplicitBaselinePull" xml:space="preserve"><value>Use the cloud version; protect the existing local file before replacement</value></data>
+  <data name="正在上传" xml:space="preserve"><value>Uploading</value></data>
+  <data name="正在校验云端摘要" xml:space="preserve"><value>Verifying cloud checksum</value></data>
+  <data name="正在保护旧版本" xml:space="preserve"><value>Protecting previous version</value></data>
+  <data name="正在提交备份" xml:space="preserve"><value>Publishing backup</value></data>
+  <data name="已完成写入并校验" xml:space="preserve"><value>Written and verified</value></data>
+  <data name="操作完成" xml:space="preserve"><value>Operation completed</value></data>
+  <data name="Cloud target overlaps HarborBackup management storage." xml:space="preserve"><value>Backup target must not overlap HarborBackup management storage.</value></data>
+  <data name="Cloud target changed concurrently. Both versions are preserved; inspect the conflict before retrying." xml:space="preserve"><value>Cloud file changed concurrently. Both versions were preserved; review the conflict before retrying.</value></data>
+  <data name="正在读取云端元数据" xml:space="preserve"><value>Reading cloud metadata</value></data>
+  <data name="取回云端项目…" xml:space="preserve"><value>Retrieve cloud project…</value></data>
+  <data name="取回并建立基线…" xml:space="preserve"><value>Retrieve and establish baseline…</value></data>
+  <data name="取回并建立基线" xml:space="preserve"><value>Retrieve and establish baseline</value></data>
+  <data name="取回所选并建立基线" xml:space="preserve"><value>Retrieve selected and establish baseline</value></data>
+  <data name="取回所选文件" xml:space="preserve"><value>Retrieve selected files</value></data>
+  <data name="选择" xml:space="preserve"><value>Select</value></data>
+  <data name="读取目标：{0}&#xA;写入本地源：{1}&#xA;仅执行勾选项；文件变化时跳过，覆盖前保护旧内容。" xml:space="preserve"><value>Read from: {0}
+Write to this PC: {1}
+Only checked items will run. Changed files are skipped; existing content is protected.</value></data>
+  <data name="已选 {0} 项 · 新增 {1} · 更新 {2} · 下载约 {3:F2} MiB · 待处理 {4}" xml:space="preserve"><value>Selected {0} · New {1} · Updates {2} · Download ~{3:F2} MiB · Attention {4}</value></data>
+  <data name="没有可加入的云端项目。请先在另一台设备完成备份。" xml:space="preserve"><value>No cloud projects are available. Complete a backup on another device first.</value></data>
+  <data name="此云端项目已加入本机列表。" xml:space="preserve"><value>This cloud project is already in this PC&apos;s project list.</value></data>
+  <data name="选择此项目在本机的保存目录" xml:space="preserve"><value>Choose where to save this project on this PC</value></data>
+  <data name="UseRegularPull" xml:space="preserve"><value>Use Retrieve updates for files with an established version.</value></data>
+  <data name="PullPreviewChanged" xml:space="preserve"><value>The file or project mapping changed after preview. Skipped; preview again.</value></data>
+  <data name="停止预览" xml:space="preserve"><value>Stop preview</value></data>
+  <data name="正在停止预览，请稍候…" xml:space="preserve"><value>Stopping preview…</value></data>
+  <data name="正在准备预览" xml:space="preserve"><value>Preparing preview</value></data>
+  <data name="正在扫描本地文件" xml:space="preserve"><value>Scanning local files</value></data>
+  <data name="正在读取云端目录与元信息" xml:space="preserve"><value>Reading cloud folders and metadata</value></data>
+  <data name="{0} · 已处理 {1}/{2} · 哈希 {3:F1} MiB · 已用 {4:F0} 秒&#xA;{5}" xml:space="preserve"><value>{0} · Processed {1}/{2} · Hashed {3:F1} MiB · Elapsed {4:F0}s
+{5}</value></data>
+  <data name="预览已完成，草稿尚未保存。" xml:space="preserve"><value>Preview completed. The draft has not been saved.</value></data>
+  <data name="预览已停止，草稿已保留。" xml:space="preserve"><value>Preview stopped. Your draft has been preserved.</value></data>
+  <data name="PreviewTimeLimitReached" xml:space="preserve"><value>Preview reached the configured time limit. Your draft has been preserved.</value></data>
+  <data name="排除规则…" xml:space="preserve"><value>Exclusion rules…</value></data>
+  <data name="本次预览的排除规则" xml:space="preserve"><value>Exclusions used in this preview</value></data>
+  <data name="排除目录：{0}" xml:space="preserve"><value>Excluded directories: {0}</value></data>
+  <data name="排除文件：{0}" xml:space="preserve"><value>Excluded files: {0}</value></data>
+  <data name="本地跳过 {0} 项，云端跳过 {1} 项。目录按一项统计，包含整个子树。" xml:space="preserve"><value>Skipped {0} local entries and {1} cloud entries. Each directory counts once, including its entire subtree.</value></data>
+  <data name="无" xml:space="preserve"><value>None</value></data>
+  <data name="RepositoryUpgradeRequired" xml:space="preserve"><value>This repository needs an upgrade. Open account management in Settings, select the existing repository and apply cloud storage settings. Other devices also need the updated app.</value></data>
+  <data name="本地目录存在" xml:space="preserve"><value>Local folder exists</value></data>
+  <data name="本地目录缺失" xml:space="preserve"><value>Local folder missing</value></data>
+  <data name="本地路径不是目录" xml:space="preserve"><value>Local path is not a folder</value></data>
+  <data name="本地目录不可访问" xml:space="preserve"><value>Local folder inaccessible</value></data>
+  <data name="未关联本机目录" xml:space="preserve"><value>Not linked on this device</value></data>
+  <data name="尚未在本机运行" xml:space="preserve"><value>Not run on this device</value></data>
+  <data name="本机状态" xml:space="preserve"><value>Local status</value></data>
+  <data name="刷新云端项目" xml:space="preserve"><value>Refresh cloud projects</value></data>
+  <data name="停止加载" xml:space="preserve"><value>Stop loading</value></data>
+  <data name="刷新以查看云端项目" xml:space="preserve"><value>Refresh to view cloud projects</value></data>
+  <data name="请先在设置中连接账户并选择管理目录。" xml:space="preserve"><value>Connect your account and select a management folder in Settings.</value></data>
+  <data name="正在读取云端项目…" xml:space="preserve"><value>Loading cloud projects…</value></data>
+  <data name="没有云端项目；请先在另一台设备完成备份。" xml:space="preserve"><value>No cloud projects. Complete a backup on another device first.</value></data>
+  <data name="云端项目 {0} 个；本机状态仅表示目录是否存在。" xml:space="preserve"><value>{0} cloud projects. Local status indicates folder presence only.</value></data>
+  <data name="云端项目加载已停止，可重新刷新。" xml:space="preserve"><value>Cloud project loading stopped. Refresh to try again.</value></data>
+  <data name="云端项目加载失败：{0}" xml:space="preserve"><value>Could not load cloud projects: {0}</value></data>
+  <data name="Authentication" xml:space="preserve"><value>Authentication</value></data>
+  <data name="由认证组件管理" xml:space="preserve"><value>Managed by authentication SDK</value></data>
+  <data name="网络连接失败。&#xA;服务域名：{0}&#xA;操作：{1}&#xA;阶段：{2}&#xA;尝试次数：{3}&#xA;本次请求耗时：{4} ms&#xA;代理策略：跟随系统（不代表实际路由）&#xA;异常链：{5}" xml:space="preserve"><value>Network connection failed.
+Service host: {0}
+Operation: {1}
+Phase: {2}
+Attempts: {3}
+Request elapsed: {4} ms
+Proxy policy: system default (not verified routing)
+Cause chain: {5}</value></data>
+  <data name="服务域名：{0} · 尝试：{1} · 请求耗时：{2} ms" xml:space="preserve"><value>Service host: {0} · Attempt: {1} · Request elapsed: {2} ms</value></data>
+  <data name="ExplicitLocalUpload"><value>Use the local version; protect the existing cloud file before replacement</value></data>
+  <data name="待首次上传或拉取"><value>Awaiting first upload or pull</value></data>
+  <data name="保存仅更新配置。切换目录后，请先上传或拉取，再继续自动备份。"><value>Saving only updates settings. After changing folders, upload or pull once to resume automatic backup.</value></data>
+  <data name="上传预览 · 请核对写入方向"><value>Upload preview · Review the write direction</value></data>
+  <data name="上传所选文件"><value>Upload selected files</value></data>
+  <data name="已选 {0} 项 · 新增 {1} · 更新 {2} · 传输约 {3:F2} MiB · 待处理 {4}"><value>Selected {0} · New {1} · Updated {2} · Transfer about {3:F2} MiB · Needs attention {4}</value></data>
+  <data name="读取本地：{0}&#xA;写入云端：{1}&#xA;勾选差异项表示使用本地版本；覆盖前保护云端旧内容，文件变化时跳过。" xml:space="preserve"><value>Read local: {0}
+Write cloud: {1}
+Selecting differences uses the local version. Protect cloud contents before replacement; skip files that change.</value></data>
+  <data name="PendingFileOperation"><value>This path has an unfinished operation and cannot be written yet. Run Recover unfinished transactions on the Issues page, then retry. Other files can proceed.</value></data>
+  <data name="PendingOperationsRetained"><value>Some files await recovery</value></data>
+  <data name="PendingOperationsUnverified"><value>Recovery records need verification</value></data>
+  <data name="PreviousMappingPending"><value>Some files were skipped</value></data>
+  <data name="未完成操作涉及的文件暂不可写入；其他文件仍可选择，旧恢复材料会保留。"><value>Files involved in unfinished operations cannot be written yet. Other files can be selected; recovery evidence is retained.</value></data>
+  <data name="恢复记录暂时无法核验；仍可查看文件，写入前需处理恢复记录。"><value>Recovery records could not be verified. Files can still be viewed; resolve the records before writing.</value></data>
+  <data name="未完成操作涉及的文件已跳过；其他文件可继续。恢复仍使用原目录，旧材料已保留。"><value>Files involved in unfinished operations were skipped; other files can proceed. Recovery uses the original folder and retains existing evidence.</value></data>
+  <data name="运行详情"><value>Run details</value></data>
+  <data name="条目详情"><value>Item details</value></data>
+  <data name="这里只显示最近结果中需要处理的条目；历史动作请在运行记录中查看。"><value>Only items needing attention from the latest result appear here. View historical actions in Run history.</value></data>
+  <data name="PreviousOperationClosed"><value>The old operation was closed safely. Its record and protected contents were retained. Upload or pull this file again.</value></data>
+  <data name="CloudOperationFailed"><value>Operation incomplete</value></data>
+  <data name="CloudPreviewFailed"><value>Preview incomplete</value></data>
+  <data name="RetryInterruptedPull"><value>The previous download was interrupted. Download again and retain the recovery record.</value></data>
+  <data name="下载到本地"><value>Download to the local folder</value></data>
+  <data name="上传到云端"><value>Upload to the cloud folder</value></data>
+  <data name="下载到本地，覆盖前保留本地旧内容"><value>Download and protect local contents before replacement</value></data>
+  <data name="上传到云端，覆盖前保留云端旧内容"><value>Upload and protect cloud contents before replacement</value></data>
+  <data name="{0}&#xA;{1}" xml:space="preserve"><value>{0}
+{1}</value></data>
+  <data name="DeviceStatusPending"><value>Device status awaiting publication</value></data>
+  <data name="状态"><value>Status</value></data>
+  <data name="待核验"><value>Needs verification</value></data>
+  <data name="自动备份状态无法读取，已暂停自动备份。"><value>Automatic backup is paused because its control record cannot be read.</value></data>
+  <data name="运行状态无法读取，仍可编辑配置。"><value>Run status cannot be read. Configuration remains editable.</value></data>
+  <data name="目录状态无法读取，仍可编辑配置。"><value>Folder status cannot be read. Configuration remains editable.</value></data>
+  <data name="运行记录无法读取，仍可编辑配置。"><value>Run history cannot be read. Configuration remains editable.</value></data>
+  <data name="{0} 个项目：{1}"><value>{0} projects: {1}</value></data>
+  <data name="全部项目（{0}）"><value>All projects ({0})</value></data>
+  <data name="共 {0} 个项目，完成写入 {1} 项，待处理 {2} 项"><value>{0} projects · {1} items written · {2} items need attention</value></data>
+  <data name="从本机项目列表移除 {0}？&#xA;只更新本机配置；源、云端文件、历史和恢复材料都会保留。" xml:space="preserve"><value>Remove {0} from this device's project list?
+Only local configuration changes. Source files, cloud files, history, and recovery materials are retained.</value></data>
+  <data name="没有可显示的云端项目。"><value>No cloud projects to display.</value></data>
+  <data name="项目 ID"><value>Project ID</value></data>
+  <data name="首次内容核对" xml:space="preserve"><value>Initial content review</value></data>
+  <data name="确认核对并保存配置" xml:space="preserve"><value>Confirm review and save settings</value></data>
+  <data name="接续已有云端项目" xml:space="preserve"><value>Continue an existing cloud project</value></data>
+  <data name="接续原项目" xml:space="preserve"><value>Continue existing project</value></data>
+  <data name="正在检查云端目录是否已有项目或文件…" xml:space="preserve"><value>Checking the cloud folder for existing projects and files…</value></data>
+  <data name="此云端项目已加入本机列表，请编辑原项目。" xml:space="preserve"><value>This cloud project is already on this PC. Edit the existing project.</value></data>
+  <data name="该云端目录登记了多个项目，请从“加入云端项目”中明确选择原项目。" xml:space="preserve"><value>Multiple projects use this cloud folder. Choose the original project through Join cloud project.</value></data>
+  <data name="Cloud target changed. Browse and select the folder again." xml:space="preserve"><value>Cloud target changed. Browse and select the folder again.</value></data>
+  <data name="本机目录：{0}&#xA;云端目录：{1}&#xA;核对后仅保存配置，双方文件均保留。差异请在保存后明确选择上传或取回。" xml:space="preserve"><value>Local folder: {0}
+Cloud folder: {1}
+Reviewing saves settings only and preserves both sides. After saving, choose upload or retrieve to resolve differences.</value></data>
+  <data name="该云端目录已登记为备份项目。接续后沿用原项目，保留所选本机目录和排除规则。&#xA;本机目录：{0}&#xA;云端目录：{1}" xml:space="preserve"><value>This cloud folder already belongs to a backup project. Continue that project using your chosen local folder and exclusions.
+Local folder: {0}
+Cloud folder: {1}</value></data>
+  <data name="当前未连接网络，请连接网络后重试。"><value>No network connection. Connect to a network and try again.</value></data>
+  <data name="暂时无法连接 OneDrive，请检查网络或代理设置后重试。"><value>Unable to reach OneDrive. Check your network or proxy settings and try again.</value></data>
+  <data name="无法与 OneDrive 建立安全连接，请检查系统时间或代理设置后重试。"><value>Unable to establish a secure connection to OneDrive. Check your system clock or proxy settings and try again.</value></data>
+  <data name="OneDrive 服务暂时不可用，请稍后重试。"><value>OneDrive is temporarily unavailable. Try again later.</value></data>
+  <data name="等待网络"><value>Waiting for network</value></data>
+  <data name="上次运行因断网中断"><value>Last run interrupted while offline</value></data>
+  <data name="显示上次结果，可刷新"><value>Showing previous results. Refresh available.</value></data>
+  <data name="OneDrive account transport is not enabled."><value>OneDrive account transport is not enabled.</value></data>
+  <data name="Connect OneDrive and select a cloud repository in settings."><value>Connect OneDrive and select a cloud repository in settings.</value></data>
+  <data name="OneDrive authorization required. Reconnect in settings."><value>OneDrive authorization required. Reconnect in settings.</value></data>
+  <data name="ChangedSourceOperationClosed"><value>The source changed. The cloud target was verified unchanged; the original journal was retained and closed. Preview again before backing up the current file.</value></data>
+  <data name="Source changed before upload; evidence retained."><value>The source differs from the version recorded by the old transaction. Recovery evidence was retained; keep this recovery report for diagnosis.</value></data>
+  <data name="操作失败"><value>Operation failed</value></data>
+  <data name="等待连接"><value>Waiting for connection</value></data>
+  <data name="托盘待处理文件：{0}"><value>{0} files need attention</value></data>
+  <data name="托盘待处理计数：{0}"><value>{0} pending</value></data>
+  <data name="托盘自动备份已暂停"><value>Auto backup paused</value></data>
+  <data name="托盘单个文件待处理"><value>1 file needs attention</value></data>
+  <data name="RunStatusWriteFailed"><value>Could not save run status</value></data>
+  <data name="RunHistoryWriteFailed"><value>Could not save run history</value></data>
+  <data name="文件传输结果已保留，但运行摘要或历史记录未完整保存。"><value>File transfer results remain valid, but the run summary or history was not fully saved.</value></data>
+  <data name="已刷新 · {0} 个可加入项目"><value>Refreshed · {0} projects available to join</value></data>
+  <data name="刷新失败，显示上次结果"><value>Refresh failed; showing previous results</value></data>
+  <data name="云端项目加载失败"><value>Could not load cloud projects</value></data>
+  <data name="云端项目详情"><value>Cloud project details</value></data>
+  <data name="重试"><value>Retry</value></data>
+  <data name="Word 临时/锁定文件" xml:space="preserve"><value>Word temporary / lock files</value></data>
+  <data name="Excel 临时/锁定文件" xml:space="preserve"><value>Excel temporary / lock files</value></data>
+  <data name="PowerPoint 临时/锁定文件" xml:space="preserve"><value>PowerPoint temporary / lock files</value></data>
+  <data name="Windows 缩略图缓存" xml:space="preserve"><value>Windows thumbnail cache</value></data>
+  <data name="Windows 文件夹设置" xml:space="preserve"><value>Windows folder settings</value></data>
+  <data name="macOS 文件夹信息" xml:space="preserve"><value>macOS folder information</value></data>
+  <data name="内置规则（勾选后对所有项目生效）" xml:space="preserve"><value>Built-in rules (selected rules apply to all projects)</value></data>
+  <data name="自定义规则（每行一项）" xml:space="preserve"><value>Custom rules (one per line)</value></data>
+  <data name="内置规则：{0}" xml:space="preserve"><value>Built-in rules: {0}</value></data>
+  <data name="全局自定义目录：{0}" xml:space="preserve"><value>Global custom directories: {0}</value></data>
+  <data name="全局自定义文件：{0}" xml:space="preserve"><value>Global custom files: {0}</value></data>
+  <data name="项目自定义目录：{0}" xml:space="preserve"><value>Project custom directories: {0}</value></data>
+  <data name="项目自定义文件：{0}" xml:space="preserve"><value>Project custom files: {0}</value></data>
+  <data name="最终有效规则" xml:space="preserve"><value>Effective rules</value></data>
+  <data name="全局规则&#xA;内置规则：{0}&#xA;目录：{1}&#xA;文件：{2}" xml:space="preserve"><value>Global rules
+Built-in rules: {0}
+Directories: {1}
+Files: {2}</value></data>
+  <data name="排除规则将在下次扫描时生效，不删除已有文件，也不重置备份状态。" xml:space="preserve"><value>Exclusions take effect on the next scan, preserving existing files and backup status.</value></data>
+  <data name="Cloud project has conflicting latest folder registrations. Review its cloud folders before continuing." xml:space="preserve"><value>This project has conflicting latest cloud folder registrations. Review its cloud folders before continuing backup or pull.</value></data>
+  <data name="自动备份传输预算（0 为不限）"><value>Automatic transfer budget (0 = unlimited)</value></data>
+  <data name="自动备份时间预算（0 为不限）"><value>Automatic time budget (0 = unlimited)</value></data>
+  <data name="预算按已启动文件的内容大小估算。达到预算后等待在途文件完成，可能略超上限；协议开销和云端内部复制不计。"><value>The budget estimates the content size of started files. Active files finish and may exceed the limit. Protocol overhead and cloud-internal copies are excluded.</value></data>
+  <data name="元信息支持一致"><value>Match supported by metadata</value></data>
+  <data name="内容不同"><value>Different content</value></data>
+  <data name="本地缺失"><value>Missing locally</value></data>
+  <data name="云端缺失"><value>Missing in cloud</value></data>
+  <data name="证据不足，无法确认"><value>Insufficient evidence</value></data>
+  <data name="无法确认"><value>Unknown</value></data>
+  <data name="核验报告"><value>Verification report</value></data>
+  <data name="核验分类"><value>Verification</value></data>
+  <data name="配置变更影响"><value>Configuration impact</value></data>
+  <data name="范围数量为两次只读观察的估算，目录按观察条目统计；执行前仍会重新核验。"><value>Counts are estimates from two read-only observations. Directories count as observed entries. Execution checks current evidence again.</value></data>
+  <data name="目录变更：{0}；排除规则变更：{1}；新增排除：{2}；重新纳入：{3}。"><value>Folder change: {0}; filter change: {1}; newly excluded: {2}; reintroduced: {3}.</value></data>
+  <data name="是"><value>Yes</value></data>
+  <data name="否"><value>No</value></data>
+  <data name="MiB"><value>MiB</value></data>
+  <data name="计划：传输 {0} 项 / {1:F2} MiB，创建目录 {2} 项，保护旧内容 {3} 项，待处理 {4} 项。&#xA;核验：一致 {5}，不同 {6}，本地缺失 {7}，云端缺失 {8}，无法确认 {9}，类型冲突 {10}。&#xA;一致性依据为本地 SHA-256 与云端元信息；云端正文未下载。" xml:space="preserve"><value>Plan: transfer {0} items / {1:F2} MiB, create {2} directories, protect {3} items, attention {4}.
+Verification: match {5}, different {6}, missing locally {7}, missing in cloud {8}, unknown {9}, type conflict {10}.
+Evidence is local SHA-256 and cloud metadata; cloud file bodies are not downloaded.</value></data>
+  <data name="预算已用完，下轮继续"><value>Budget reached; continue next run</value></data>
+  <data name="AutomaticTransferBudgetReached"><value>Automatic content budget reached. Files not started will continue next run.</value></data>
+  <data name="AutomaticTimeBudgetReached"><value>Automatic time budget reached. Files not started will continue next run.</value></data>
+  <data name="文件暂不可用"><value>File temporarily unavailable</value></data>
+  <data name="网络暂不可用"><value>Network temporarily unavailable</value></data>
+  <data name="需要核对恢复状态"><value>Recovery evidence needs review</value></data>
+  <data name="预算停止"><value>Stopped by budget</value></data>
+  <data name="传输限速" xml:space="preserve">
+    <value>Transfer speed limits</value>
+  </data>
+  <data name="上传速度上限（0 为不限）" xml:space="preserve">
+    <value>Upload limit (0 for unlimited)</value>
+  </data>
+  <data name="下载速度上限（0 为不限）" xml:space="preserve">
+    <value>Download limit (0 for unlimited)</value>
+  </data>
+  <data name="KiB/s" xml:space="preserve">
+    <value>KiB/s</value>
+  </data>
+  <data name="项目保护状态" xml:space="preserve">
+    <value>Project protection</value>
+  </data>
+  <data name="最近完整成功" xml:space="preserve">
+    <value>Last complete success</value>
+  </data>
+  <data name="最近还原核验" xml:space="preserve">
+    <value>Last restore verification</value>
+  </data>
+  <data name="已知积压" xml:space="preserve">
+    <value>Known backlog</value>
+  </data>
+  <data name="尚无核验记录" xml:space="preserve">
+    <value>No verification recorded</value>
+  </data>
+  <data name="无已知积压" xml:space="preserve">
+    <value>No known backlog</value>
+  </data>
+  <data name="已知 {0} 项{1}；始于 {2}" xml:space="preserve">
+    <value>{0} known items{1}; since {2}</value>
+  </data>
+  <data name="（数量可能不完整）" xml:space="preserve">
+    <value> (count may be incomplete)</value>
+  </data>
+  <data name="完整成功：{0}&#xA;还原核验：{1}&#xA;{2}" xml:space="preserve">
+    <value>Complete success: {0}&#xA;Restore verification: {1}&#xA;{2}</value>
+  </data>
+  <data name="项目保护状态无法读取，仍可编辑配置。" xml:space="preserve">
+    <value>Project protection status is unreadable; configuration remains editable.</value>
+  </data>
+  <data name="备份积压已超过 24 小时" xml:space="preserve">
+    <value>Backup backlog exceeds 24 hours</value>
+  </data>
+  <data name="完整成功已超过 24 小时" xml:space="preserve">
+    <value>No complete success in 24 hours</value>
+  </data>
+  <data name="已知积压至少 {0} 项，首次记录于 {1}。请核对项目和运行详情；未观察到的文件不计入数量。" xml:space="preserve">
+    <value>At least {0} backlog items, first recorded at {1}. Review the project and run details; unobserved files are not counted.</value>
+  </data>
+  <data name="此映射最近一次完整成功为 {0}。请运行备份或查看暂停、网络与预算设置。" xml:space="preserve">
+    <value>This mapping last completed successfully at {0}. Run a backup or check pause, network and budget settings.</value>
+  </data>
+  <data name="{0} · {1:N0} 字节 · 修改于 {2}" xml:space="preserve">
+    <value>{0} · {1:N0} bytes · Modified {2}</value>
+  </data>
+  <data name="来源：{0}&#xA;设备：{1}&#xA;大小：{2:N0} 字节&#xA;文件修改时间：{3}&#xA;版本记录时间：{4}&#xA;SHA-256：{5}" xml:space="preserve">
+    <value>Origin: {0}&#xA;Device: {1}&#xA;Size: {2:N0} bytes&#xA;File modified: {3}&#xA;Version recorded: {4}&#xA;SHA-256: {5}</value>
+  </data>
+  <data name="本机" xml:space="preserve">
+    <value>This PC</value>
+  </data>
+  <data name="另存一份…" xml:space="preserve">
+    <value>Save a separate copy…</value>
+  </data>
+  <data name="选择独立的查看目录，不覆盖现有文件" xml:space="preserve">
+    <value>Choose a separate inspection folder; existing files will be retained</value>
+  </data>
+  <data name="已核验并另存：{0}" xml:space="preserve">
+    <value>Verified and saved: {0}</value>
+  </data>
+  <data name="另存失败：{0}" xml:space="preserve">
+    <value>Could not save a copy: {0}</value>
+  </data>
+  <data name="独立目录恢复" xml:space="preserve">
+    <value>Restore to a separate folder</value>
+  </data>
+  <data name="云端当前文件" xml:space="preserve">
+    <value>Current cloud files</value>
+  </data>
+  <data name="上一份归档" xml:space="preserve">
+    <value>Previous archived copy</value>
+  </data>
+  <data name="筛选相对路径（含子目录）" xml:space="preserve">
+    <value>Filter relative path (including subfolders)</value>
+  </data>
+  <data name="独立输出目录" xml:space="preserve">
+    <value>Separate output folder</value>
+  </data>
+  <data name="浏览输出目录…" xml:space="preserve">
+    <value>Browse output folder…</value>
+  </data>
+  <data name="列出可恢复文件" xml:space="preserve">
+    <value>List restorable files</value>
+  </data>
+  <data name="恢复选中文件" xml:space="preserve">
+    <value>Restore selected files</value>
+  </data>
+  <data name="演练选中文件" xml:space="preserve">
+    <value>Test restoring selected files</value>
+  </data>
+  <data name="停止恢复" xml:space="preserve">
+    <value>Stop restore</value>
+  </data>
+  <data name="恢复演练预算（MiB，0 不限）" xml:space="preserve">
+    <value>Restore-test budget (MiB, 0 for unlimited)</value>
+  </data>
+  <data name="轮换组数" xml:space="preserve">
+    <value>Rotation groups</value>
+  </data>
+  <data name="选择文件后恢复到独立目录；现有文件不会被覆盖。" xml:space="preserve">
+    <value>Select files to restore into a separate folder. Existing files will be retained.</value>
+  </data>
+  <data name="请先选择至少一个文件。" xml:space="preserve">
+    <value>Select at least one file first.</value>
+  </data>
+  <data name="恢复列表读取中…" xml:space="preserve">
+    <value>Reading restore list…</value>
+  </data>
+  <data name="正文下载与校验中…" xml:space="preserve">
+    <value>Downloading and verifying file contents…</value>
+  </data>
+  <data name="已完成 {0} 个文件正文校验，共 {1} 字节。报告目录：{2}" xml:space="preserve">
+    <value>Verified the contents of {0} files, totaling {1} bytes. Report folder: {2}</value>
+  </data>
+  <data name="关闭前正在停止恢复，请稍候。" xml:space="preserve">
+    <value>Stopping restore before closing; please wait.</value>
+  </data>
+  <data name="SHA-256 证据不足" xml:space="preserve">
+    <value>Insufficient SHA-256 evidence</value>
+  </data>
+  <data name="{0} · {1} · {2} 个文件（选中范围）" xml:space="preserve">
+    <value>{0} · {1} · {2} files (selected scope)</value>
+  </data>
+  <data name="来源" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="字节" xml:space="preserve">
+    <value>Bytes</value>
+  </data>
+  <data name="校验依据" xml:space="preserve">
+    <value>Verification evidence</value>
+  </data>
+  <data name="范围已改变，请重新列出可恢复文件。" xml:space="preserve">
+    <value>The scope changed. List restorable files again.</value>
+  </data>
+  <data name="正文校验通过" xml:space="preserve">
+    <value>Content verified</value>
+  </data>
+  <data name="本轮预算暂未覆盖" xml:space="preserve">
+    <value>Deferred by this run's budget</value>
+  </data>
+  <data name="恢复失败" xml:space="preserve">
+    <value>Restore failed</value>
+  </data>
+  <data name="来源：{0}&#xA;路径：{1}&#xA;结果：{2}&#xA;已核验字节：{3:N0}" xml:space="preserve">
+    <value>Source: {0}&#xA;Path: {1}&#xA;Result: {2}&#xA;Verified bytes: {3:N0}</value>
+  </data>
+  <data name="保存位置：{0}" xml:space="preserve">
+    <value>Saved to: {0}</value>
+  </data>
+  <data name="说明：{0}" xml:space="preserve">
+    <value>Details: {0}</value>
+  </data>
+  <data name="本轮没有可核验的文件。" xml:space="preserve">
+    <value>No files were selected for verification in this run.</value>
+  </data>
+  <data name="本轮正文预算未覆盖此文件；可增加预算后核验。" xml:space="preserve">
+    <value>This run's content budget did not cover this file; increase the budget to verify it.</value>
+  </data>
+  <data name="缺少可信的 SHA-256 证据，未下载该文件。" xml:space="preserve">
+    <value>No trusted SHA-256 evidence is available. This file was not downloaded.</value>
+  </data>
+  <data name="云端版本已变化，请重新列出可恢复文件。" xml:space="preserve">
+    <value>The cloud version changed. List restorable files again.</value>
+  </data>
+  <data name="下载期间云端版本发生变化，本次结果未保存。" xml:space="preserve">
+    <value>The cloud version changed during download. The result was not saved.</value>
+  </data>
+  <data name="输出位置已有同名内容，请选择其他目录。" xml:space="preserve">
+    <value>The output path already exists. Choose another directory.</value>
+  </data>
+  <data name="下载内容的大小与记录不符，本次结果未保存。" xml:space="preserve">
+    <value>The downloaded size differs from the evidence. The result was not saved.</value>
+  </data>
+  <data name="下载内容的摘要与记录不符，本次结果未保存。" xml:space="preserve">
+    <value>The downloaded checksum differs from the evidence. The result was not saved.</value>
+  </data>
+  <data name="此项目已从本机配置移除，请重新选择项目。" xml:space="preserve">
+    <value>This project was removed from the local configuration. Select a project again.</value>
+  </data>
+  <data name="项目映射或候选版本已变化，请重新列出可恢复文件。" xml:space="preserve">
+    <value>The project mapping or candidate version changed. List restorable files again.</value>
+  </data>
+</root>

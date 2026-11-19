@@ -1,0 +1,53 @@
+# IDE and operating-system files
+.vs/
+.idea/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
+
+# Build and test output
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.binlog
+
+# Local environments and credentials
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+/config/local/
+
+# Production configuration: only sanitized examples are tracked
+/bakup-config.json
+/system-config.json
+
+# Runtime data must never enter Git
+/runtime/
+/state/
+/archived/
+/conflicts/
+/log/
+/temp/
+
+# Managed install/data layout must never enter source control
+/data/
+/app/
+/projects.json
+/backup-settings.json
+/storage-settings.json
+/desktop-settings.json
+/onedrive-account.json
+/data-retained-*/
+/credentials/
+/cache/
+/history/
+/logs/
+/protection/

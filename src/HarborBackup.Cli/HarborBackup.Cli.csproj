@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Select the same WinForms runtime assets as Desktop so both self-contained apphosts share dependencies. -->
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    <ProjectReference Include="../HarborBackup.Core/HarborBackup.Core.csproj" />
+    <ProjectReference Include="../HarborBackup.Windows/HarborBackup.Windows.csproj" />
+  </ItemGroup>
+</Project>

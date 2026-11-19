@@ -1,0 +1,32 @@
+name: 优化建议 / Feature request
+description: 描述使用场景、当前困难和期待的行为。 / Describe the use case and desired behavior.
+title: '[Feature] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        建议会公开展示。请使用虚构文件、目录和账户，不附真实配置、日志、授权材料或业务数据。安全漏洞按 SECURITY.md 私密报告。
+
+        This request is public. Use fictional files, paths, and accounts. Do not attach real configuration, logs, credentials, or business data. Follow SECURITY.md for private vulnerability reporting.
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 场景与困难 / Use case and problem
+      description: 当前如何操作，哪一步有困难？ / What do you do today, and where is the difficulty?
+    validations:
+      required: true
+  - type: textarea
+    id: desired-behavior
+    attributes:
+      label: 期待的行为 / Desired behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已考虑的替代方案 / Alternatives considered
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: 与现有备份规则的关系 / Effect on backup rules
+      description: 如涉及覆盖、冲突、历史、删除或数据布局，请描述预期影响。 / Describe expected changes to overwrite protection, conflicts, history, deletion, or storage layout, if any.
