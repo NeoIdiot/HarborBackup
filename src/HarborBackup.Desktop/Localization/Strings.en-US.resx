@@ -1210,4 +1210,14 @@ Evidence is local SHA-256 and cloud metadata; cloud file bodies are not download
   <data name="项目映射或候选版本已变化，请重新列出可恢复文件。" xml:space="preserve">
     <value>The project mapping or candidate version changed. List restorable files again.</value>
   </data>
+  <data name="自动模式" xml:space="preserve"><value>Automatic mode</value></data>
+  <data name="自动上传" xml:space="preserve"><value>Automatic upload</value></data>
+  <data name="自动双向" xml:space="preserve"><value>Automatic two-way</value></data>
+  <data name="自动双向备份" xml:space="preserve"><value>Automatic two-way backup</value></data>
+  <data name="开启后，此项目会自动上传和下载更新；双方修改时等待选择。关闭时仅自动上传。删除不会同步。首次需手动上传或取回。" xml:space="preserve"><value>When enabled, this project uploads and downloads updates automatically; changes on both sides wait for your choice. When disabled, it only uploads automatically. Deletions are not propagated. Upload or pull manually once before automatic work can begin.</value></data>
+  <data name="上传" xml:space="preserve"><value>Upload</value></data>
+  <data name="下载" xml:space="preserve"><value>Download</value></data>
+  <data name="创建云端目录" xml:space="preserve"><value>Create cloud directory</value></data>
+  <data name="创建本地目录" xml:space="preserve"><value>Create local directory</value></data>
+  <data name="AutomaticBackupPaused" xml:space="preserve"><value>Scheduled backups paused</value></data>
 </root>

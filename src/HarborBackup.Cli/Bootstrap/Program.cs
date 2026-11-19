@@ -142,7 +142,11 @@ internal static class Program
                     foreach (var project in result.Projects)
                     {
                         Console.WriteLine($"项目：{project.Destination} | 结果={project.ExitCode}");
-                        foreach (var file in project.Files) Console.WriteLine($"  {file.Action,-20} {file.Path} | 修改={file.Changed} | {file.FailureKind} | {file.Error}");
+                        foreach (var file in project.Files)
+                        {
+                            var action = file.Direction is { } fileDirection ? $"{fileDirection}/{file.Action}" : file.Action.ToString();
+                            Console.WriteLine($"  {action,-20} {file.Path} | 修改={file.Changed} | {file.FailureKind} | {file.Error}");
+                        }
                         foreach (var issue in project.Issues) Console.Error.WriteLine($"  {issue.Code}: {issue.Message}");
                     }
                 }

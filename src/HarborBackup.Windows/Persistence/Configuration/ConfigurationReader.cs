@@ -13,6 +13,8 @@ public sealed record ConfigurationSnapshot(IReadOnlyList<ProjectDefinition> Proj
     public CloudAccountSettings? CloudAccount { get; init; }
     public IReadOnlyList<CloudMapping> RetiredMappings { get; init; } = [];
     public IReadOnlyList<DismissedCloudProject> DismissedCloudProjects { get; init; } = [];
+    // Local execution policy is separate from persisted recovery mappings and their signatures.
+    public IReadOnlySet<string> AutomaticBidirectionalProjects { get; init; } = new HashSet<string>(StringComparer.Ordinal);
     public string ArchiveDirectory { get; init; } = "";
     public string ConflictDirectory { get; init; } = "";
     public string LogDirectory { get; init; } = "";
@@ -66,6 +68,7 @@ public static class ConfigurationReader
         var folders = Get(config, "folders");
         if (folders.ValueKind != JsonValueKind.Array) throw new FormatException("folders must be an array.");
         var projects = new List<ProjectDefinition>();
+        var automaticBidirectionalProjects = new HashSet<string>(StringComparer.Ordinal);
         var retired = Get(config, "retiredMappings").ValueKind == JsonValueKind.Undefined ? new List<CloudMapping>() :
             JsonSerializer.Deserialize<List<CloudMapping>>(Get(config, "retiredMappings"), AtomicJson.Options)
             ?? throw new FormatException("Invalid retired mappings.");
@@ -87,6 +90,10 @@ public static class ConfigurationReader
                 throw new FormatException("Invalid project or obsolete backupName.");
             var projectId = Text(Get(entry, "id"));
             if (!FileVersion.IsHash(projectId) || !ids.Add(projectId)) throw new FormatException("Project IDs must be valid and unique.");
+            var automaticBidirectional = Get(entry, "automaticBidirectional");
+            if (automaticBidirectional.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.True or JsonValueKind.False))
+                throw new FormatException("automaticBidirectional must be a boolean.");
+            if (automaticBidirectional.ValueKind == JsonValueKind.True) automaticBidirectionalProjects.Add(projectId);
             var destination = PathRules.Relative(Text(Get(entry, "destination")), true);
             if (projects.Any(p => p.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase) || p.Destination.StartsWith(destination + "/", StringComparison.OrdinalIgnoreCase) || destination.StartsWith(p.Destination + "/", StringComparison.OrdinalIgnoreCase))) throw new FormatException("Cloud project destinations overlap.");
             if (destination.Equals(account.RootName, StringComparison.OrdinalIgnoreCase) ||
@@ -127,7 +134,8 @@ public static class ConfigurationReader
         if (projects.Any(p => (p.Source.Length != 0 && PathRules.Overlaps(log, p.Source))))
             throw new FormatException("Log directory overlaps business files.");
         var snapshot = new ConfigurationSnapshot(projects.AsReadOnly(), new(state, deviceId, values.Hash, values.ContinueOnError), values.IntervalMinutes, values.StartDelayMinutes, root)
-        { CloudAccount = account, DismissedCloudProjects = dismissed, AutomaticBudget = values.AutomaticBudget,
+        { CloudAccount = account, DismissedCloudProjects = dismissed, AutomaticBidirectionalProjects = automaticBidirectionalProjects,
+          AutomaticBudget = values.AutomaticBudget,
           UploadKiBPerSecond = values.UploadKiBPerSecond, DownloadKiBPerSecond = values.DownloadKiBPerSecond,
           ArchiveRetention = account.ArchiveRetention, ConflictRetention = account.ConflictRetention, ArchiveDirectory = archive, ConflictDirectory = conflict, LogDirectory = log, HistoryDirectory = data.History, LogRetentionDays = values.LogRetentionDays, HistoryRetentionDays = values.HistoryRetentionDays, ExecutionTimeLimitMinutes = values.ExecutionLimitMinutes };
         // Keep the old scope addressable without copying, rewriting or deleting any state.

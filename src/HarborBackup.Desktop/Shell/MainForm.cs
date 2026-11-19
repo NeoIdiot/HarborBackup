@@ -29,7 +29,7 @@ internal sealed partial class MainForm : Form
     private readonly Label welcomeHeading = AppStyle.Label("", 48);
     private readonly Label welcomeBody = AppStyle.Label("", 56);
     private readonly ProgressBar progressBar = new() { Dock = DockStyle.Top, Height = 5, Visible = false };
-    private readonly DataGridView projectGrid = AppStyle.Grid(("Destination", "项目 / 目标相对路径", 19), ("DisplayLocalStatus", "本机状态", 12), ("DisplaySource", "本地源目录", 17), ("Target", "实际目标", 17), ("DisplayResult", "最近结果", 12), ("DisplayProtection", "项目保护状态", 23));
+    private readonly DataGridView projectGrid = AppStyle.Grid(("Destination", "项目 / 目标相对路径", 19), ("DisplayLocalStatus", "本机状态", 10), ("DisplaySource", "本地源目录", 15), ("Target", "实际目标", 15), ("DisplayResult", "最近结果", 10), ("DisplayProtection", "项目保护状态", 19), ("DisplayAutomaticMode", "自动模式", 12));
     private readonly DataGridView overviewGrid = AppStyle.Grid(("Destination", "备份项目", 25), ("DisplayResult", "最近结果", 20), ("DisplayLastFullSuccess", "最近完整成功", 18), ("DisplayLastRestoreVerification", "最近还原核验", 18), ("DisplayBacklog", "已知积压", 19));
     private readonly DataGridView historyGrid = AppStyle.Grid(("Time", "结束时间", 25), ("Mode", "操作", 15), ("ExitCode", "结果", 15), ("ProjectNames", "项目", 45));
     private readonly DataGridView detailGrid = AppStyle.Grid(("DisplayProject", "项目", 20), ("Path", "相对路径", 25), ("DisplayAction", "动作", 15), ("DisplayDetails", "详情", 40));
@@ -415,6 +415,15 @@ internal sealed partial class MainForm : Form
     }
     public bool CanExit() => !settings.Dirty || MessageBox.Show(this, UiText.Text("设置页有未保存的修改。退出并放弃这些修改？"), UiText.Text("退出程序"), MessageBoxButtons.OKCancel) == DialogResult.OK;
     public void ClosePermanently() { closingPermanently = true; Close(); }
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Escape)
+        {
+            Close();
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
     protected override void Dispose(bool disposing)
     {
         if (disposing) { catalogCancellation?.Cancel(); controller.Changed -= UpdateState; UiText.Changed -= RefreshLanguage; }

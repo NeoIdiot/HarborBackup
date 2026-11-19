@@ -60,7 +60,11 @@ An installed release reports actionable issues in Windows Notification Center. S
 
 Saving a new project checks the selected cloud folder first. A registered folder offers to continue the existing project, preserving its identity and your chosen local folder and exclusions. If that project is already on this PC, a message asks you to edit it rather than adding it again. An unregistered nonempty folder opens Initial content review; confirm the review before saving settings. Cancellation or a failed check saves nothing. Review preserves both sides and transfers no business files. After saving, explicitly upload or retrieve to establish the mapping before automatic backup resumes. New projects require a connected account for this check; existing projects can still be edited offline.
 
-Backup uploads without modifying the local source. Pull is explicit and does not modify cloud file contents. Deletions are not propagated.
+Automatic bidirectional backup in Add project / Edit project defaults to off, including for existing projects. Off preserves automatic upload-only backup. Turning it on allows that project to upload local-only changes and download cloud-only changes automatically. The project list shows its automatic mode. This setting is local to each device; enable it separately on other PCs. Both directions use the global interval, pause control, speed limits and automatic budgets.
+
+Automatic bidirectional backup chooses a direction from the common baseline rather than modification times. A file missing on one side is copied from the other when trusted content evidence permits. Different changes on both sides, or unequal contents without a common baseline, retain conflict protection and require an explicit choice. Cloud files without sufficient evidence are not downloaded automatically. Comparison never downloads business contents; a selected download follows Pull's cloud-version checks, fresh local-content checks, protection and verified baseline commit. Deletions are not propagated, so a file deleted on one side may be restored by a later automatic run.
+
+Changing the automatic mode retains existing baselines and initialization. New projects and actual folder changes still require one completed manual upload or pull first. Paths involved in unfinished transactions remain deferred for manual recovery using their original mapping. Manual Backup uploads without modifying the local source; manual Pull downloads without modifying cloud business contents.
 
 Cloud comparisons use metadata, item IDs, version tags, sizes and checksums without downloading business file contents. Local SHA-256 caching follows size, UTC modification time and the local full-check interval. Full checks hash local contents only.
 
@@ -81,6 +85,8 @@ Exclusion rules… in the preview shows the effective global and project rules a
 ## History and recovery
 
 The tray always keeps the blue anchor logo, with a bottom-right status badge: circular arrows for activity, an amber exclamation mark for attention, a red cross for failure, pause bars for paused automatic backups, and a dash while waiting for connection or network. No badge means idle and does not certify that every file is backed up. Hover for status and pending-file counts; open the main window for full details.
+
+Pressing ESC in the main window works like its top-right ×: the main window closes, the tray icon remains, and active tasks and scheduled backups continue. Reopen the main window from the tray. An open dialog handles ESC first. Use Exit application to end background operation.
 
 Drag the sidebar's right edge to change its width. A narrow sidebar shows navigation icons only, and its width is remembered when you exit.
 

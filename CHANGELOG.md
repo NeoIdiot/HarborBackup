@@ -8,6 +8,12 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Prepare Windows synthetic-test CI, dependency-update configuration and contribution templates. Hosted CI has not yet been exercised in a public repository.
 - Require future release payloads to include the exact project license.
 
+## 0.9.18 — 2026-11-19
+
+- Close the main window with Esc while keeping the tray icon and background tasks running, matching the window's close button.
+- Add an optional automatic two-way backup setting for each local project, disabled by default. Automatic runs select upload or download per file using the common baseline, retain conflicts for explicit resolution and never propagate deletions.
+- Share persisted pause control and transfer/time budgets across automatic uploads and downloads, including CLI automatic calls; show each transfer's direction in run details.
+
 ## 0.9.17 — 2026-11-19
 
 - Restore current files or the previous archive into a separate directory, with content verification and bounded, rotating restore tests.

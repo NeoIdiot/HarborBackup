@@ -122,7 +122,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
                 var target = CloudAccountPresentation.Path(p.Destination);
                 return new ProjectRow(p.Destination, p.Source, target, p.ConfigurationError ?? result switch
                 { "Success" => "云端操作已完成", "Warning" => "有待处理问题", "BudgetLimited" => "预算已用完，下轮继续", "OfflineInterrupted" => "上次运行因断网中断", "Failed" => "失败", "Cancelled" => "已停止", _ => "尚未运行" }, LocalStatus: loaded.LocalStatuses[index], CloudFolderId: p.CloudFolderId, ProjectId: p.ProjectId)
-                { Health = loaded.Health[index] };
+                { Health = loaded.Health[index], AutomaticBidirectional = config.AutomaticBidirectionalProjects.Contains(p.ProjectId) };
             }).ToArray();
             if (!projects.SequenceEqual(refreshedProjects)) projects = refreshedProjects;
             if (loaded.LastCompleted is { } value && (completed is null || value > completed)) completed = value;

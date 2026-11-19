@@ -35,6 +35,8 @@ internal sealed partial class MainForm
             Operation("取回更新…", DesktopCommand.PullPreview, true), CloudProjectButton("取回云端项目…", true), more));
         projectGrid.Name = "ProjectGrid";
         projectGrid.Columns[5].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+        projectGrid.Columns[6].MinimumWidth = 120;
+        projectGrid.Columns[6].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
         projectGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
         projectGrid.CurrentCellChanged += (_, _) => UpdateProjectActions();
         refreshCatalog.Click += async (_, _) => await LoadCloudProjectsAsync();

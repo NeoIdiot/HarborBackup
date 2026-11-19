@@ -18,6 +18,7 @@ internal sealed class ProjectEditorDialog : Form
     private readonly TextBox destination = AppStyle.Text();
     private readonly TextBox directories = AppStyle.Lines();
     private readonly TextBox files = AppStyle.Lines();
+    private readonly CheckBox automaticBidirectional = new() { Name = "AutomaticBidirectional", AutoSize = true, Dock = DockStyle.Top };
     private readonly Dictionary<string, CheckBox> presetChoices = [];
     private readonly TextBox resolved = new() { Name = "ResolvedTarget", ReadOnly = true, Dock = DockStyle.Top, BorderStyle = BorderStyle.FixedSingle };
     private readonly Label feedback = AppStyle.Label("修改仅保存在草稿中。", 65);
@@ -74,6 +75,7 @@ internal sealed class ProjectEditorDialog : Form
         cloudFolderId = record["cloudFolderId"]?.GetValue<string>();
         directories.Text = ReadLines(record["excludedDirectories"]);
         files.Text = ReadLines(record["excludedFiles"]);
+        automaticBidirectional.Checked = record["automaticBidirectional"]?.GetValue<bool>() ?? false;
         var selectedPresets = ExclusionPresets.Resolve(ReadLines(this.draft.Projects["builtInExclusions"])
             .Split([ '\r', '\n' ], StringSplitOptions.RemoveEmptyEntries));
         if (global)
@@ -153,6 +155,14 @@ internal sealed class ProjectEditorDialog : Form
             Shown += (_, _) => AlignBrowseButtons();
             AlignBrowseButtons();
             destination.PlaceholderText = UiText.Text("例如 Projects/MyProject");
+            var automaticCard = new SurfacePanel { Name = "AutomaticBackupOptions", Dock = DockStyle.Top,
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(16, 10, 16, 14) };
+            UiText.Set(automaticBidirectional, "自动双向备份");
+            var automaticHint = new Label { Name = "AutomaticBidirectionalHint", Dock = DockStyle.Top, AutoSize = true,
+                ForeColor = AppStyle.Muted, Padding = new Padding(0, 8, 0, 0) };
+            UiText.Set(automaticHint, "开启后，此项目会自动上传和下载更新；双方修改时等待选择。关闭时仅自动上传。删除不会同步。首次需手动上传或取回。");
+            automaticCard.SizeChanged += (_, _) => automaticHint.MaximumSize = new Size(Math.Max(100, automaticCard.ClientSize.Width - automaticCard.Padding.Horizontal), 0);
+            automaticCard.Controls.Add(automaticHint); automaticCard.Controls.Add(automaticBidirectional); Add(automaticCard);
         }
         var exclusions = new SurfacePanel { Dock = DockStyle.Top, Height = 218, Padding = new Padding(16, 10, 16, 12) };
         var ruleColumns = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
@@ -228,6 +238,7 @@ internal sealed class ProjectEditorDialog : Form
         {
             record["source"] = source.Text.Trim();
             record["destination"] = destination.Text.Trim();
+            record["automaticBidirectional"] = automaticBidirectional.Checked;
             if (cloudFolderId is null) record.Remove("cloudFolderId"); else record["cloudFolderId"] = cloudFolderId;
             if (index is null) { record["id"] = newProjectId; folders.Add(record); }
         }

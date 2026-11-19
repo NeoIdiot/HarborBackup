@@ -21,6 +21,8 @@ internal sealed record ProjectRow(string Destination, string Source, string Targ
     bool IsLocal = true, string LocalStatus = "", string? CloudFolderId = null, string ProjectId = "")
 {
     public ProjectHealthSnapshot? Health { get; init; }
+    public bool AutomaticBidirectional { get; init; }
+    public string DisplayAutomaticMode => IsLocal ? UiText.Text(AutomaticBidirectional ? "自动双向" : "自动上传") : "—";
     public string DisplayResult => UiText.Text(Result);
     public string DisplaySource => IsLocal ? Source : "—";
     public string DisplayLocalStatus => UiText.Text(LocalStatus);
@@ -59,15 +61,19 @@ internal static class ReportPresentation
         var attention = details.Where(d => d.Attention).ToArray();
         return attention.Length > 0 && attention.All(d => d.IsOfflineIssue);
     }
-    public static string Action(FileAction action) => action switch
+    public static string Action(FileAction action, SyncDirection? direction = null) => action switch
     {
+        FileAction.Copy when direction == SyncDirection.Backup => "上传",
+        FileAction.Copy when direction == SyncDirection.Pull => "下载",
+        FileAction.CreateDirectory when direction == SyncDirection.Backup => "创建云端目录",
+        FileAction.CreateDirectory when direction == SyncDirection.Pull => "创建本地目录",
         FileAction.Copy => "复制", FileAction.Equal => "内容一致", FileAction.CreateDirectory => "创建目录",
         FileAction.Directory => "目录", FileAction.Absent => "两端缺失", FileAction.NeedsPull => "待取回",
         FileAction.NeedsPush => "待备份", FileAction.ConflictUnresolved => "内容冲突", FileAction.TypeConflict => "类型冲突",
         FileAction.Deferred => "延期处理", _ => action.ToString()
     };
     public static string Result(int code) => code switch { 0 => "操作完成", 2 => "有待处理问题", 130 => "已安全停止", _ => "失败" };
-    public static string Mode(string mode) => mode switch { "Backup" => "备份", "Pull" => "取回", "Recover" => "事务恢复", _ => mode };
+    public static string Mode(string mode) => mode switch { "Backup" => "备份", "Pull" => "取回", "Recover" => "事务恢复", "AutomaticBidirectional" => "自动双向备份", _ => mode };
     private static DetailRow PreviewRow(string project, PreviewPlan file, bool pull, bool upload)
     {
         var decision = file.Decision;
@@ -83,7 +89,7 @@ internal static class ReportPresentation
     }
     public static DetailRow[] Details(object report) => report switch
     {
-        BackupReport b => b.Projects.SelectMany(p => p.Files.Select(f => new DetailRow(p.Destination, f.Path, Action(f.Action), f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention()) { FailureKind = f.FailureKind })
+        BackupReport b => b.Projects.SelectMany(p => p.Files.Select(f => new DetailRow(p.Destination, f.Path, Action(f.Action, f.Direction), f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention()) { FailureKind = f.FailureKind })
             .Concat(p.Issues.Select(i => new DetailRow(p.Destination, "", i.Code, i.Message, true))))
             .Concat(b.Diagnostics.Select(i => new DetailRow("运行", "", i.Code, i.Message, true, SystemRow: true,
                 DetailKey: "{0}\n{1}", DetailArguments: [UiText.Text("文件传输结果已保留，但运行摘要或历史记录未完整保存。"), i.Message]))).ToArray(),

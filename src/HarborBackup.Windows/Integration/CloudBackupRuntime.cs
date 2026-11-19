@@ -93,9 +93,18 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
             .Where(p => destination is null || p.ProjectId == destination || p.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase))
             .DistinctBy(p => CloudMapping.Bind(p, config)).ToArray() : BackupRuntime.Select(config, destination);
         if (destination is not null && selectedProjects.Count == 0) throw new ArgumentException("Unknown destination.");
+        var mode = recoverOnly ? "Recover" : automatic && selectedProjects.Any(p => config.AutomaticBidirectionalProjects.Contains(p.ProjectId))
+            ? "AutomaticBidirectional" : direction.ToString();
+        // Hosts share persisted pause control, including CLI automatic invocations.
+        // A skipped trigger must not replace the last transfer/coverage record.
+        if (automatic && new DeviceControlStore(config.Preview).ReadPaused())
+            return new(mode, started, DateTimeOffset.UtcNow, selectedProjects.Select(p => new ProjectRun(p.Destination,
+                [], [new("AutomaticBackupPaused", "后续自动备份已暂停", false)], new()) { ProjectId = p.ProjectId, CoverageComplete = false }).ToArray())
+                { CloudUploadStatus = "Paused" };
         using var drive = Open();
         foreach (var project in selectedProjects)
         {
+            var bidirectional = automatic && config.AutomaticBidirectionalProjects.Contains(project.ProjectId);
             var files = new List<FileResult>(); var issues = new List<PreviewIssue>(); var metrics = new ReadMetrics();
             var completedMapping = false;
             var coverageComplete = false;
@@ -136,7 +145,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                     progress?.Report(new(BackupPhase.Scanning, project.Destination));
                     var read = await session.ReadAsync(full, token, progress, metrics, deferContentReads: direction == SyncDirection.Backup,
                         allowMissingRoot: direction == SyncDirection.Pull); metrics = read.Snapshot.Metrics;
-                    var blocked = affected.Where(p => !read.Snapshot.Files.Any(f => p.CanRestartPull(project, f, direction))).ToArray();
+                    var blocked = automatic ? affected : affected.Where(p => !read.Snapshot.Files.Any(f => p.CanRestartPull(project, f, direction))).ToArray();
                     if (blocked.Length > 0) issues.Add(new("PreviousMappingPending",
                         "未完成操作涉及的文件已跳过；其他文件可继续。恢复仍使用原目录，旧材料已保留。", false));
                     session.Progress = (phase, path) => progress?.Report(new(phase, project.Destination, path, files.Count, read.Snapshot.Files.Count, metrics.HashBytes));
@@ -155,6 +164,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                     async Task<(FileResult Result, bool Cancelled)> ProcessAsync(PreviewFile file)
                     {
                         var action = FileAction.Deferred;
+                        var fileDirection = direction;
                         var preparingLocal = false;
                         var elapsed = System.Diagnostics.Stopwatch.StartNew();
                         try
@@ -166,7 +176,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                                 return (new(file.RelativePath, FileAction.Deferred, false, budget.StopReason) { FailureKind = FileFailureKind.Budget }, false);
                             }
                             if (retryResults.TryGetValue(file.RelativePath, out var retry)) return (retry, false);
-                            if (affected.Any(p => p.Blocks(project, file, direction)))
+                            if (affected.Any(p => automatic ? p.Affects(project, file.RelativePath) : p.Blocks(project, file, fileDirection)))
                                 return (new(file.RelativePath, FileAction.Deferred, false, "PendingFileOperation"), false);
                             progress?.Report(new(BackupPhase.Processing, project.Destination, file.RelativePath, files.Count, read.Snapshot.Files.Count, metrics.HashBytes));
                             var heads = read.Heads.GetValueOrDefault(file.RelativePath) ?? [];
@@ -174,22 +184,32 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                             await using var prepared = direction == SyncDirection.Backup
                                 ? await session.PrepareBackupAsync(file, heads, token, force: confirmedUpload is not null) : null;
                             if (prepared is not null) file = prepared.File;
-                            if (direction == SyncDirection.Pull) file = await session.RefreshPullLocalAsync(file, token);
+                            if (bidirectional)
+                                fileDirection = AutomaticBackupDecision.DirectionFor(session.Decide(file, heads, SyncDirection.Backup), file.Source, file.Target);
+                            if (fileDirection == SyncDirection.Pull)
+                            {
+                                // A candidate upload may have become a pull after hashing. Release its
+                                // read handle before replacing local contents, then recheck the local side.
+                                if (prepared is not null) await prepared.DisposeAsync();
+                                file = await session.RefreshPullLocalAsync(file, token);
+                            }
                             preparingLocal = false;
-                            if (affected.Any(p => p.Blocks(project, file, direction)))
+                            if (affected.Any(p => automatic ? p.Affects(project, file.RelativePath) : p.Blocks(project, file, fileDirection)))
                                 return (new(file.RelativePath, FileAction.Deferred, false, "PendingFileOperation"), false);
-                            var restarts = affected.Where(p => p.CanRestartPull(project, file, direction)).ToArray();
-                            var decision = PendingCloudFile.Describe(session.Decide(file, heads, direction, confirmation?.EstablishBaseline ?? false), restarts);
+                            var restarts = automatic ? [] : affected.Where(p => p.CanRestartPull(project, file, fileDirection)).ToArray();
+                            var decision = PendingCloudFile.Describe(session.Decide(file, heads, fileDirection, confirmation?.EstablishBaseline ?? false), restarts);
                             action = decision.Action;
                             if (decision.Action == FileAction.Deferred && file.Source.Kind is ObservationKind.Unavailable or ObservationKind.Unstable)
                                 return (new(file.RelativePath, decision.Action, false, file.Source.Error) { FailureKind = FileFailureKind.FileUnavailable }, false);
                             if (selected is not null)
                             {
                                 if (decision.Action is not (FileAction.Copy or FileAction.CreateDirectory or FileAction.Equal) ||
-                                    PendingCloudFile.Confirm(session.ConfirmPull(file, heads, decision, confirmation!.EstablishBaseline, direction), restarts).Confirmation != selected[file.RelativePath].Confirmation)
+                                    PendingCloudFile.Confirm(session.ConfirmPull(file, heads, decision, confirmation!.EstablishBaseline, fileDirection), restarts).Confirmation != selected[file.RelativePath].Confirmation)
                                     return (new(file.RelativePath, FileAction.Deferred, false, "PullPreviewChanged"), false);
                             }
-                            if (!budget.TryStart(file.Source.Version?.Length ?? 0,
+                            var transferBytes = decision.Action == FileAction.Copy && fileDirection == SyncDirection.Pull
+                                ? file.Target.Version?.Length ?? 0 : file.Source.Version?.Length ?? 0;
+                            if (!budget.TryStart(transferBytes,
                                 decision.Action is FileAction.Copy or FileAction.CreateDirectory || decision.Protection != ProtectionKind.None))
                             {
                                 Interlocked.Exchange(ref stopDispatch, 1);
@@ -197,17 +217,19 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                             }
                             if (decision.Action == FileAction.Copy)
                                 foreach (var pendingFile in restarts) pendingFile.Restart!.Retain(config);
-                            await session.ApplyAsync(file, heads, direction, decision, token);
+                            await session.ApplyAsync(file, heads, fileDirection, decision, token);
                             return (new(file.RelativePath, decision.Action, decision.Action is FileAction.Copy or FileAction.CreateDirectory,
-                                decision.Reason == "CloudMetadataRequired" ? "CloudMetadataRequired" : null), false);
+                                decision.Reason == "CloudMetadataRequired" ? "CloudMetadataRequired" : null)
+                                { Direction = bidirectional ? fileDirection : null }, false);
                         }
                         catch (OperationCanceledException)
-                        { Interlocked.Exchange(ref stopDispatch, 1); return (new(file.RelativePath, action, false, "Cancelled") { FailureKind = FileFailureKind.Cancelled }, true); }
+                        { Interlocked.Exchange(ref stopDispatch, 1); return (new(file.RelativePath, action, false, "Cancelled")
+                            { FailureKind = FileFailureKind.Cancelled, Direction = bidirectional ? fileDirection : null }, true); }
                         catch (Exception ex)
                         {
                             var kind = FileFailurePolicy.Classify(ex, preparingLocal);
                             if (kind != FileFailureKind.FileUnavailable) Interlocked.Exchange(ref stopDispatch, 1);
-                            return (new(file.RelativePath, action, false, ex.Message) { FailureKind = kind }, false);
+                            return (new(file.RelativePath, action, false, ex.Message) { FailureKind = kind, Direction = bidirectional ? fileDirection : null }, false);
                         }
                         finally { lock (metrics) metrics.FileProcessingMilliseconds += elapsed.ElapsedMilliseconds; }
                     }
@@ -293,7 +315,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                 CoverageComplete = coverageComplete && !cancelled && issues.Count == 0 && !recoverOnly });
             if (cancelled || (!config.Preview.ContinueOnError && (issues.Any(i => i.IsFailure) || files.Any(f => f.Error is not null)))) break;
         }
-        var result = new BackupReport(recoverOnly ? "Recover" : direction.ToString(), started, DateTimeOffset.UtcNow, runs, cancelled)
+        var result = new BackupReport(mode, started, DateTimeOffset.UtcNow, runs, cancelled)
         { BudgetStopReason = budget.StopReason };
         result = result with { CloudUploadStatus = result.Completion switch
             { "Cancelled" => "Incomplete", "BudgetLimited" => "BudgetLimited", "Completed" => "CloudOperationsConfirmed", _ => "NeedsAttention" } };

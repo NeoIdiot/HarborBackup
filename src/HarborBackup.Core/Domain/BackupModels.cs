@@ -8,6 +8,8 @@ public enum LocalRetention { KeepLocal, OnlineOnly }
 public sealed record FileResult(string Path, FileAction Action, bool Changed, string? Error = null)
 {
     public FileFailureKind FailureKind { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public SyncDirection? Direction { get; init; }
     public bool NeedsAttention() => Error is not null || FailureKind is FileFailureKind.Authorization or FileFailureKind.Network ||
         Action is FileAction.Deferred or FileAction.TypeConflict or FileAction.ConflictUnresolved or FileAction.NeedsPull or FileAction.NeedsPush;
 }
