@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms></PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MSTest" Version="4.0.1" />
+    <PackageReference Include="MSTest" Version="4.5.3" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
     <ProjectReference Include="../../src/HarborBackup.Desktop/HarborBackup.Desktop.csproj" />
     <Compile Include="../HarborBackup.Windows.Tests/TestWorkspace.cs" Link="TestWorkspace.cs" />
