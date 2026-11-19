@@ -12,6 +12,12 @@ Back up Windows folders to personal OneDrive while preserving file names and dir
 - Keep the previous ordinary version, with separate conflict copies and recovery materials. Restore current files or the previous archive into an independent folder and verify downloaded contents.
 - Configure backup intervals, pause, transfer/time budgets and upload/download speed limits. Inspect project health, run history and JSON reports.
 
+## UI walkthrough
+
+<a href="docs/user-guide/demo.en-US.md"><img src="docs/media/overview.en-US.png" alt="HarborBackup's actual overview controls with synthetic project protection information" width="960"></a>
+
+Actual controls are populated with synthetic data; no real OneDrive account transfer was performed. See the [five-step UI walkthrough](docs/user-guide/demo.en-US.md) for project preview, protected upload and independent restore.
+
 ## Platform and scope
 
 The current application targets Windows x64 and personal Microsoft OneDrive accounts. It uses C#, .NET 10 and WinForms.

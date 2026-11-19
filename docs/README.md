@@ -9,6 +9,7 @@ The current product uses direct OneDrive account transport. Start with the curre
 - [项目介绍（中文）](../README.md) · [Project overview (English)](../README.en.md)
 - [许可证 / License](../LICENSE) · [变更摘要 / Changelog](../CHANGELOG.md)
 - [当前中文指南](user-guide/onedrive-account.zh-CN.md) · [Current English guide](user-guide/onedrive-account.en-US.md)
+- [五步界面演示（中文）](user-guide/demo.zh-CN.md) · [Five-step UI walkthrough (English)](user-guide/demo.en-US.md)：实际控件、合成项目，无真实账户传输 / Actual controls with synthetic data; no real account transfer.
 - [CLI 与确认清单 / CLI and selection files](../src/HarborBackup.Cli/README.md)
 - [隐私 / Privacy](../PRIVACY.md) · [支持 / Support](../SUPPORT.md) · [安全问题 / Security reporting](../SECURITY.md)
 

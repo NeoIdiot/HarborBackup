@@ -12,6 +12,12 @@
 - 普通历史保留上一份；冲突副本和未完成恢复材料另行保留。可将当前文件或上一份历史恢复到独立目录，并下载正文核验。
 - 支持备份间隔、暂停、内容和时间预算、上传/下载限速，以及项目保护状态、运行记录和 JSON 报告。
 
+## 界面演示
+
+<a href="docs/user-guide/demo.zh-CN.md"><img src="docs/media/overview.zh-CN.png" alt="HarborBackup 实际概览控件，使用合成项目展示保护状态" width="960"></a>
+
+图中为合成项目和实际控件，未执行真实 OneDrive 账户传输。查看[五步界面演示](docs/user-guide/demo.zh-CN.md)，了解项目预览、上传保护与独立恢复。
+
 ## 平台与边界
 
 当前面向 Windows x64，使用 C#、.NET 10 和 WinForms；账户连接面向个人 Microsoft OneDrive。
