@@ -53,6 +53,8 @@
 
 完整的环境准备、开发启动、Inno Setup 下载与隔离安装验证见[从零开始开发](docs/development/getting-started.md)。普通构建和合成测试不需要真实 OneDrive 账户。
 
+正式安装包构建成功后统一放在 `artifacts/installers`，附 SHA-256 与原始构建报告。已有构建可运行 `./scripts/release/Export-Installer.ps1` 归集；使用 `./scripts/build/Clean-Artifacts.ps1 -WhatIf` 预览旧构建和测试批次的清理计划。
+
 ## 文档与贡献
 
 - [文档索引](docs/README.md)：当前用户指南、设计和历史资料。

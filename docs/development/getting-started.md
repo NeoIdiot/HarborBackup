@@ -97,7 +97,30 @@ Use the directory printed by `Publish.ps1` as `$publishDirectory` below, then us
 
 The two variables are paths to output from the preceding commands, not preinstalled tools or checked-in artifacts. Keep HarborBackup closed while running installer validation. The validation installer is a separate build without production registration or shortcuts; the script installs under `artifacts/install-validation` and checks lifecycle and data preservation using synthetic files. Do not give it a normal production installer.
 
-Publish, packaging and test workflows manage ignored output through the repository retention policy. They do not publish a GitHub release automatically. Keep release claims tied to the exact source commit, payload, installer hash and validation evidence. Source tests, isolated installation checks, real-account checks and production acceptance are distinct results; report untested items explicitly.
+A successful normal installer build automatically exports a verified copy to the stable `artifacts/installers` directory. A `-ValidationBuild` does not update this entry. Open it with:
+
+```powershell
+Invoke-Item ./artifacts/installers
+```
+
+To initialize the entry from an existing normal build, export the most recent eligible package under `artifacts/publish`, or explicitly select a publish directory:
+
+```powershell
+./scripts/release/Export-Installer.ps1
+# Optional: export a specific existing build instead.
+./scripts/release/Export-Installer.ps1 -PublishDirectory $publishDirectory
+```
+
+Export verifies and copies the versioned installer and its original `package-report.json`, and writes `SHA256SUMS.txt`, `latest.json` and a README. It preserves the source report and original publish tree; it does not rebuild an old package from the current source. "Latest" identifies the most recent normal build selected by the exporter, not the highest version or a promise that the package matches repository HEAD or passed acceptance. Check the report's source identity and the corresponding validation evidence.
+
+Publish, packaging and test workflows manage ignored output through the repository retention policy. Cleanup also protects the last publish batch containing a normal installer. Preview cleanup or temporarily keep one batch per category with:
+
+```powershell
+./scripts/build/Clean-Artifacts.ps1 -WhatIf
+./scripts/build/Clean-Artifacts.ps1 -KeepCount 1
+```
+
+Additional protected successful batches and current inputs/outputs may remain. Cleanup does not expand into NuGet, tools, diagnostics or unknown directories. These workflows do not publish a GitHub release automatically. Keep release claims tied to the exact source commit, payload, installer hash and validation evidence. Source tests, isolated installation checks, real-account checks and production acceptance are distinct results; report untested items explicitly.
 
 ## Where to read next
 

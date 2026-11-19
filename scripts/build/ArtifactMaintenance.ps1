@@ -73,8 +73,38 @@ function Remove-HarborArtifactHistory {
             # Keep the latest successful result even when newer attempts failed.
             $successful = $runs | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName $group.Marker) } | Select-Object -First 1
             if ($successful) { $keep += $successful.FullName }
+            # New payloads need not contain an installer. Retain the latest actual
+            # production package independently of the latest successful publish.
+            if ($group.Name -eq 'publish') {
+                $installerCandidates = @()
+                foreach ($installerRun in $runs) {
+                    try {
+                        $reportPath = Assert-HarborArtifactPath (Join-Path $installerRun.FullName 'installers/package-report.json')
+                        if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) { continue }
+                        [string]$reportText = Get-Content -LiteralPath $reportPath -Raw -ErrorAction Stop
+                        if (-not $reportText.TrimStart().StartsWith('{', [StringComparison]::Ordinal)) { continue }
+                        $report = $reportText | ConvertFrom-Json -ErrorAction Stop
+                        if ($null -eq $report -or $report.validationBuild -isnot [bool] -or $report.validationBuild -ne $false) { continue }
+                        $installers = @(Get-ChildItem -LiteralPath (Split-Path -Parent $reportPath) -Filter '*Setup-x64.exe' -File -ErrorAction Stop)
+                        if ($installers.Count -ne 1 -or $installers[0].Length -le 0 -or
+                            ($installers[0].Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue }
+                        $null = Assert-HarborArtifactPath $installers[0].FullName
+                        $installerCandidates += [pscustomobject]@{
+                            RunPath = $installerRun.FullName
+                            ReportTimeUtc = (Get-Item -LiteralPath $reportPath -Force -ErrorAction Stop).LastWriteTimeUtc
+                        }
+                    } catch { continue } # Unreadable or malformed evidence is not a successful installer.
+                }
+                # Repackaging an older payload may update only this report, not its run root.
+                $latestInstaller = $installerCandidates | Sort-Object ReportTimeUtc, RunPath -Descending | Select-Object -First 1
+                if ($latestInstaller) { $keep += $latestInstaller.RunPath }
+            }
             foreach ($run in $runs) {
-                if ($run.FullName -in $keep -or $run.FullName -in $preserved) { continue }
+                $preservedRun = $preserved | Where-Object {
+                    $_.Equals($run.FullName, [StringComparison]::OrdinalIgnoreCase) -or
+                        $_.StartsWith($run.FullName + '\', [StringComparison]::OrdinalIgnoreCase)
+                } | Select-Object -First 1
+                if ($run.FullName -in $keep -or $preservedRun) { continue }
                 try {
                     if ($activePaths | Where-Object { $_.StartsWith($run.FullName + '\', [StringComparison]::OrdinalIgnoreCase) }) {
                         Write-Warning "Artifact cleanup skipped a running application: $($run.FullName)"

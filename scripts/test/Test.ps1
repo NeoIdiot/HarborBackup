@@ -20,6 +20,7 @@ try {
     & (Join-Path $PSScriptRoot 'Test-TestEnvironment.ps1')
     & (Join-Path $PSScriptRoot 'Test-SourceIdentity.ps1')
     & (Join-Path $PSScriptRoot 'Test-PublishLayout.ps1')
+    & (Join-Path $PSScriptRoot 'Test-InstallerExport.ps1')
     if(-not $NoRestore){ & $HarborDotNet restore HarborBackup.slnx --configfile NuGet.Config --locked-mode; if($LASTEXITCODE -ne 0){throw 'Restore failed.'} }
     & $HarborDotNet build HarborBackup.slnx -c $Configuration --no-restore --verbosity minimal
     if($LASTEXITCODE -ne 0){throw 'Build failed.'}

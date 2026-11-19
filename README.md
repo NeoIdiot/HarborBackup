@@ -53,6 +53,8 @@ Run these commands at the repository root. Before testing, exit HarborBackup fro
 
 See [Getting started](docs/development/getting-started.md) for a fresh setup, development launch, Inno Setup bootstrap and isolated installation validation. Building and synthetic tests do not need a real OneDrive account.
 
+Completed production installers are collected in `artifacts/installers`, with their SHA-256 and original build report. For an existing build, run `./scripts/release/Export-Installer.ps1` to populate this folder. Preview cleanup of old build and test runs with `./scripts/build/Clean-Artifacts.ps1 -WhatIf`.
+
 ## Documentation and contributions
 
 - [Documentation index](docs/README.md) and [contributing guide](CONTRIBUTING.md).

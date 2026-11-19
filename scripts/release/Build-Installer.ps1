@@ -43,7 +43,12 @@ $Installer = $Installers[0]
 Assert-HarborSourceIdentity $Repo $Manifest.source
 $Report = [ordered]@{ version = $Manifest.version; source = $Manifest.source; runtime = $Manifest.runtime; deployment = $Manifest.deployment; trimmed = $Manifest.trimmed; installerBytes = $Installer.Length; payloadBytes = $Manifest.payloadBytes; sha256 = (Get-FileHash -LiteralPath $Installer.FullName).Hash; signed = (Get-AuthenticodeSignature -LiteralPath $Installer.FullName).Status -eq 'Valid'; validationBuild = [bool]$ValidationBuild }
 $Report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $Output 'package-report.json') -Encoding UTF8
-Write-Output "Installer: $($Installer.FullName)"
+if (-not $ValidationBuild) {
+    & (Join-Path $PSScriptRoot 'Export-Installer.ps1') -PublishDirectory $PublishDirectory
+} else {
+    Write-Output "Validation installer: $($Installer.FullName)"
+}
+Write-Output "Build output: $($Installer.FullName)"
 Write-Output ($Report | ConvertTo-Json -Compress)
 Invoke-HarborArtifactCleanup -PreservePaths $PublishDirectory
 } finally { $ArtifactLease.ReleaseMutex(); $ArtifactLease.Dispose() }
