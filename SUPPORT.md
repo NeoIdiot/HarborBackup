@@ -1,6 +1,6 @@
 # 使用与问题反馈 / Help and feedback
 
-先查看 [README](README.md)、[OneDrive 账户使用说明](docs/user-guide/onedrive-account.zh-CN.md) 和 [验证记录](docs/development/validation-index.md)。开发环境与测试入口见 [CONTRIBUTING.md](CONTRIBUTING.md) 及 [验证规范](docs/development/verification.md)。
+先查看 [中文 README](README.zh-CN.md)、[OneDrive 账户使用说明](docs/user-guide/onedrive-account.zh-CN.md) 和 [验证记录](docs/development/validation-index.md)。开发环境与测试入口见 [CONTRIBUTING.md](CONTRIBUTING.md) 及 [验证规范](docs/development/verification.md)。
 
 在仓库的 Issues 页面选择问题报告或优化建议表单。提供应用版本、Windows 版本、最小复现和预期/实际行为。请用虚构路径和合成文件；只分享必要的脱敏错误片段或截图，检查截图中的文件名、路径和账户信息。
 

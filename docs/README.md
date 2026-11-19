@@ -6,7 +6,7 @@ The current product uses direct OneDrive account transport. Start with the curre
 
 ## 使用 / Using HarborBackup
 
-- [项目介绍（中文）](../README.md) · [Project overview (English)](../README.en.md)
+- [Project overview (English)](../README.md) · [项目介绍（中文）](../README.zh-CN.md)
 - [许可证 / License](../LICENSE) · [变更摘要 / Changelog](../CHANGELOG.md)
 - [当前中文指南](user-guide/onedrive-account.zh-CN.md) · [Current English guide](user-guide/onedrive-account.en-US.md)
 - [五步界面演示（中文）](user-guide/demo.zh-CN.md) · [Five-step UI walkthrough (English)](user-guide/demo.en-US.md)：实际控件、合成项目，无真实账户传输 / Actual controls with synthetic data; no real account transfer.
@@ -20,6 +20,7 @@ The current product uses direct OneDrive account transport. Start with the curre
 - [详细验证流程 / Verification workflow](development/verification.md)
 - [脱敏配置示例 / Sanitized configuration examples](../config/examples/README.md)
 - [公开发布检查表 / Public-release checklist](development/open-source-checklist.md)
+- [GitHub 维护说明 / GitHub maintenance notes](../.github/MAINTENANCE.md)
 
 ## 当前设计 / Current design
 

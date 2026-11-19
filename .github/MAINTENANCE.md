@@ -1,5 +1,7 @@
 # GitHub 维护说明
 
+[English project overview](../README.md) · [中文项目介绍](../README.zh-CN.md)
+
 `workflows/ci.yml` 在 GitHub 托管的 `windows-2025` 上运行完整 `Test.ps1 -Configuration Release -IsolatedProfile`。这是**无真实云端依赖的合成测试**：SDK 安装和 NuGet 还原仍需要网络，测试使用临时数据及合成传输，不配置用户令牌、真实 OneDrive、安装器或发布步骤。开发测试成功不代表真实授权或安装/升级验收通过。
 
 SDK `10.0.115` 安装在 runner 临时目录，避免预装 SDK 影响 `global.json` 的 `latestPatch` 选择。更新 SDK 时同步 workflow 的安装版本和选择断言，并运行完整验证。CI 没有依赖本机 Inno 或包缓存；不缓存或上传用户数据。
