@@ -14,7 +14,7 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Make Run now follow each project's mode, while explicit upload/download actions retain their direction. Keep reading existing Boolean mode settings.
 - Keep project protection status on one line with full evidence in tooltips and project details; remove duplicate resolved cloud-target displays and retain paths relative to OneDrive root.
 
-Development regression: 666 passing tests and four process-interruption recovery checks. See the [development validation record](docs/development/validation-project-modes-2026-11-19.md); installer validation is recorded separately after packaging.
+Development regression: 666 passing tests and four process-interruption recovery checks; isolated installation validation: 20 checks. See the [0.9.19 validation record](docs/development/validation-0.9.19.md) for the exact source and package identity.
 
 ## 0.9.18 — 2026-11-19
 
