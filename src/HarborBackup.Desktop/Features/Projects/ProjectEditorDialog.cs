@@ -112,7 +112,8 @@ internal sealed class ProjectEditorDialog : Form
             targetRows.Controls.Add(AppStyle.Label("云端目录（相对 OneDrive 根目录）", 30));
             var targetBrowse = AppStyle.Button("浏览云端…", (_, _) =>
             {
-                using var picker = new CloudTargetDialog(presenter.BrowseCloudAsync);
+                using var picker = new CloudTargetDialog(presenter.BrowseCloudAsync, presenter.PrefetchCloudAsync,
+                    cloudFolderId, destination.Text);
                 if (picker.ShowDialog(this) == DialogResult.OK) { destination.Text = picker.Destination; cloudFolderId = picker.FolderId; }
             });
             var targetInput = PathPickerRow(destination, targetBrowse);

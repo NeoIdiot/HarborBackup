@@ -38,6 +38,10 @@ internal sealed partial class DesktopController(RuntimePaths paths,
     private BackupProgress? progress;
     public CloudAccountSettings CloudAccount { get; private set; } = new();
     public RuntimePaths Paths { get; private set; } = paths;
+    private CloudFolderBrowser? folderBrowser;
+    internal CloudFolderBrowser FolderBrowser => folderBrowser ??= new(
+        () => new CloudAccountSession(Paths.Data).Read(),
+        (account, folderId, token) => new CloudAccountSession(Paths.Data).BrowseAsync(account, folderId, token));
     public bool Busy => loading || coordinator.IsBusy || controlWrite is { IsCompleted: false };
     public event Action? Changed;
     private bool WaitingForNetwork => networkOffline && CloudAccount.Enabled && !CloudAccount.RequiresAuthorization && !stopping;

@@ -18,7 +18,7 @@ public sealed class SettingsLoadingTests
         internal int Reads;
         public Task<ConfigurationDraft> LoadAsync() { Reads++; return Pending.Task; }
         public Task<CloudProjectOnboarding> InspectNewProjectAsync(ProjectDefinition project, CancellationToken token) => throw new AssertFailedException();
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new AssertFailedException();
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new AssertFailedException();
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => throw new AssertFailedException();
         public Task<PreviewReport> PreviewAsync(ConfigurationDraft draft, string? destination = null,
             CancellationToken cancellationToken = default, IProgress<BackupProgress>? progress = null) => throw new AssertFailedException();

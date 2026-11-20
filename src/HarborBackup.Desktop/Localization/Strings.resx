@@ -186,6 +186,9 @@
   <data name="起始日期筛选" xml:space="preserve">
     <value>起始日期筛选</value>
   </data>
+  <data name="刷新" xml:space="preserve">
+    <value>刷新</value>
+  </data>
   <data name="刷新记录" xml:space="preserve">
     <value>刷新记录</value>
   </data>

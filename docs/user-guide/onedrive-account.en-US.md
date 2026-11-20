@@ -20,6 +20,8 @@ Connect your personal OneDrive account under Settings > Account and management f
 
 Add a project, choose its Local folder, then use Browse cloud or enter a Cloud folder relative to OneDrive root, such as Projects/DROP_CODE. OneDrive root is the fixed starting point, so this example means OneDrive/Projects/DROP_CODE. Original files and subdirectories appear directly there. New paths are created on the first upload, without an extra backups, computer, project-ID or version-ID prefix. Preview before saving. The editor and project list show the relative cloud folder without a duplicate resolved-target field or column.
 
+Browse cloud opens the project's recorded cloud folder when its ID is known. It briefly caches folder listings and preloads some child-folder listings after displaying the current folder. Going up or reopening the picker can reuse unexpired listings, reducing repeated waits. Use Refresh to see folders recently created, renamed or moved on another device. A failed refresh preserves the previous listing and current location. Closing the picker cancels unfinished reads. Browsing and selecting folders do not upload or download project files.
+
 Another device can connect the same management folder and Join cloud project with its own local source. Project targets must not overlap management storage or other targets. Existing nonempty project folders are allowed; files without trusted metadata are preserved for review.
 
 ## Comparison and transfer

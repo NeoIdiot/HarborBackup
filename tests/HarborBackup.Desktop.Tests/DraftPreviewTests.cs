@@ -83,7 +83,7 @@ public sealed class DraftPreviewTests
     {
         public Task<CloudProjectOnboarding> InspectNewProjectAsync(ProjectDefinition project, CancellationToken token) => throw new AssertFailedException("Editing an existing project must remain offline.");
         public int Saves;
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new AssertFailedException("Saving must not browse the cloud.");
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new AssertFailedException("Saving must not browse the cloud.");
         public Task<ConfigurationDraft> LoadAsync() => Task.FromResult(editor.Load());
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.FromResult(editor.Validate(draft));
         public Task<bool> SaveAsync(ConfigurationDraft draft, ConfigurationPart part)
@@ -174,7 +174,7 @@ public sealed class DraftPreviewTests
         public int Saves;
         public int Calls;
         public ConfigurationSnapshot? LastPreview;
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new NotSupportedException();
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new NotSupportedException();
         public Task<ConfigurationDraft> LoadAsync() => Task.FromResult(editor.Load());
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.Run(() => editor.Validate(draft));
         public Task<bool> SaveAsync(ConfigurationDraft draft, ConfigurationPart part) { Saves++; return Task.FromResult(true); }

@@ -607,7 +607,7 @@ public sealed class HostTests
                             Assert.IsEmpty(editor.Controls.Find("ResolvedTarget", true));
                             Capture(editor, (english ? "en" : "zh") + "-editor"); editor.Close();
                         }
-                        using (var picker = new CloudTargetDialog(_ => Task.FromResult(new HarborBackup.Windows.Integration.CloudFolderListing(
+                        using (var picker = new CloudTargetDialog((_, _, _) => Task.FromResult(new HarborBackup.Windows.Integration.CloudFolderListing(
                             new("drive-root", "OneDrive", "root", 0, true),
                             [new("projects", "Projects", "tag", 0, true)]))))
                         {

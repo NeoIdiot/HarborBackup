@@ -131,6 +131,7 @@ Eight file operations continuously refill available slots by default; directorie
 - Per-file baselines avoid rewriting a giant baseline document for every file.
 - UI reports metadata reading, local scanning/hashing, upload, protection, verification and publication.
 - Each project offers cloud folder browsing and a truthful final path. Management settings no longer contain a global backup-content directory.
+- The Desktop project-folder picker shares a bounded, five-minute in-memory listing cache within the desktop session, isolated by account settings and folder ID. The configured folder opens directly when its ID is known; otherwise browsing starts at the root. Requested listings are displayed before limited child-listing prefetch (at most eight folders, two concurrent reads); prefetch does not recursively scan OneDrive. Navigation reuses successful listings and coalesces concurrent reads for the same folder. Explicit refresh bypasses cached results; failed reads preserve the current location and successful listing. Closing the picker cancels its pending reads, and account changes discard obsolete responses. This cache is only for navigation: it does not establish baselines or replace execution-time cloud identity/version checks.
 
 Cloud folder names and modification times are preserved where supported. NTFS ACLs, alternate streams and reparse-point semantics are not represented as ordinary OneDrive files.
 
