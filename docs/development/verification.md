@@ -2,7 +2,7 @@
 
 先阅读 [当前账户传输规则](../architecture/onedrive-account-transport.md) 和 [安装与源码布局](../architecture/storage-layout.md)。版本实测记录见 [验证记录索引](validation-index.md)，仅用于审计。
 
-当前版本的构建、打包及验证限制见 [0.9.19 发布记录](validation-0.9.19.md)。
+当前版本的构建、打包及验证限制见 [0.9.20 发布记录](validation-0.9.20.md)。
 
 Windows / .NET 10 SDK，global.json 固定 SDK 基线；使用 scripts/build/Use-DotNet.ps1。NuGet 缓存、工具和报告位于 artifacts，禁止提交。
 

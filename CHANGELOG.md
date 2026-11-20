@@ -15,7 +15,7 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Resume verified original tasks after temporary network failures, with persistent scope, receipts, budgets and provider cooldowns; distinguish automatic waiting, version confirmation, repair and user stop.
 - Preserve independent recovery tasks and genuine manual issues, and reconcile completed transfers before sending content again.
 
-Development evidence: [project identity and folder rename validation](docs/development/validation-project-identity-2026-11-20.md), [network recovery validation](docs/development/validation-network-recovery-2026-11-20.md). Release packaging and installation results are recorded separately after verification.
+Regression: 837 passing tests and four process-interruption recovery checks; isolated installation validation: 20 checks. See the [0.9.20 validation record](docs/development/validation-0.9.20.md) for the exact source and package identity. Earlier development evidence: [project identity and folder rename validation](docs/development/validation-project-identity-2026-11-20.md), [network recovery validation](docs/development/validation-network-recovery-2026-11-20.md).
 
 ## 0.9.19 — 2026-11-19
 
