@@ -30,6 +30,7 @@ public static class CloudNetworkAvailability
             if (probe is CloudOfflineException) return Offline;
         for (Exception? current = error; current is not null; current = current.InnerException)
         {
+            if (current is CloudCooldownException) return ServiceUnavailable;
             if (current is CloudRequestException service && (int)service.StatusCode is 502 or 503 or 504)
                 return ServiceUnavailable;
             if (current is CloudTransportException transport && transport.Causes.Contains("AuthenticationException/TLS", StringComparison.Ordinal)) return SecureConnection;

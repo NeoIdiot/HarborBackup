@@ -15,11 +15,13 @@ internal sealed class ProblemNotificationPolicy
 
         var error = state.Error is { } message && !IsOffline(message) ? message : null;
         var failed = state.Status is "失败" or "运行失败" or "请检查配置";
+        if (state.Status != "请检查配置" && ReportPresentation.IsAutomaticRetryOnly(state.Details)) failed = false;
         var signature = new HashCode();
         var issueCount = 0;
         foreach (var row in state.Details)
         {
-            if (!row.Attention || row.IsOfflineIssue || row.FailureKind is FileFailureKind.Budget or FileFailureKind.Cancelled ||
+            if (!row.Attention || row.IsOfflineIssue || row.IsAutomaticRetry || row.Recovery == RecoveryDisposition.Stopped ||
+                row.FailureKind is FileFailureKind.Budget or FileFailureKind.Cancelled ||
                 row.Action is "AutomaticTimeBudgetReached" or "AutomaticTransferBudgetReached") continue;
             signature.Add(row.ProjectId.Length > 0 ? row.ProjectId : row.Project);
             signature.Add(row.Path);

@@ -61,6 +61,7 @@ internal sealed record NetworkRequestContext(string Host, string Operation, int 
 {
     internal static readonly HttpRequestOptionsKey<string> OperationKey = new("HarborBackup.Operation");
     internal static readonly HttpRequestOptionsKey<int> AttemptKey = new("HarborBackup.Attempt");
+    internal static readonly HttpRequestOptionsKey<DateTimeOffset> RetryNotBeforeKey = new("HarborBackup.RetryNotBeforeUtc");
     internal static readonly HttpRequestOptionsKey<NetworkRequestContext> ContextKey = new("HarborBackup.NetworkContext");
     public long ElapsedMilliseconds => (long)Stopwatch.GetElapsedTime(Started).TotalMilliseconds;
 

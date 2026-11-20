@@ -10,10 +10,15 @@ using HarborBackup.Windows.Persistence.Configuration;
 namespace HarborBackup.Desktop.Controllers;
 
 internal enum DesktopCommand { Backup, Preview, UploadPreview, PullPreview, Pull, Verify, FullBackup, Recover, RunConfigured }
+internal sealed record DesktopRunRequest(DesktopCommand Command, string? ProjectId, bool Automatic, bool RetryOnly);
 
 internal sealed partial class DesktopController(RuntimePaths paths,
     Func<CloudAccountSettings, CancellationToken, Task<IReadOnlyList<CloudProjectTarget>>>? cloudCatalogReader = null,
-    Func<bool>? networkAvailable = null)
+    Func<bool>? networkAvailable = null,
+    TimeProvider? timeProvider = null,
+    Func<DesktopRunRequest, CancellationToken, Task<object?>>? operationRunner = null,
+    Func<ConfigurationSnapshot, IReadOnlyList<CloudAutomaticRetryCandidate>>? resumeCandidateReader = null,
+    Func<double>? retryJitter = null)
 {
     private readonly RunCoordinator coordinator = new();
     private BackupSchedule? schedule;
@@ -46,9 +51,10 @@ internal sealed partial class DesktopController(RuntimePaths paths,
     public event Action? Changed;
     private bool WaitingForNetwork => networkOffline && CloudAccount.Enabled && !CloudAccount.RequiresAuthorization && !stopping;
     public DesktopState State => new(WaitingForNetwork && !runningOperation && status == "空闲" ? "等待网络" : status,
-        Busy, runningOperation, coordinator.Paused, coordinator.Paused ? null : schedule?.NextDueUtc,
+        Busy, runningOperation, coordinator.Paused, coordinator.Paused ? null : NextWorkDueUtc,
         completed, configurationError ?? error ?? stateDiagnostics.FirstOrDefault()?.Details, config, projects, presentedDetails, history, progress, needsSetup)
-    { OperationBusy = coordinator.IsBusy || controlWrite is { IsCompleted: false }, NetworkOffline = networkOffline };
+    { OperationBusy = coordinator.IsBusy || controlWrite is { IsCompleted: false }, NetworkOffline = networkOffline,
+        Recovery = CurrentRecovery };
     public ConfigurationEditor Editor => new(Paths);
     private void Notify()
     {
@@ -104,10 +110,19 @@ internal sealed partial class DesktopController(RuntimePaths paths,
                     DateTimeOffset.TryParse(stamp.GetValue<string>(), out var value) ? value : null, null, "运行状态无法读取，仍可编辑配置。");
                 var health = c.Projects.Select(p => ReadState<ProjectHealthSnapshot?>(() => ProjectHealthStore.Read(c, p, saved),
                     null, "项目保护状态无法读取，仍可编辑配置。")).ToArray();
+                var recoveries = c.Projects.Select(p => ReadState(() =>
+                {
+                    var record = saved?["projects"]?.AsArray().FirstOrDefault(r => r?["projectId"]?.GetValue<string>() == p.ProjectId);
+                    if (record?["healthBinding"]?.GetValue<string>() != CloudMapping.Bind(p, c)) return RecoveryDisposition.None;
+                    return record?["recovery"] is { } value && Enum.TryParse<RecoveryDisposition>(value.GetValue<string>(), out var recovery) && Enum.IsDefined(recovery)
+                        ? recovery : RecoveryDisposition.None;
+                }, RecoveryDisposition.None, "运行状态无法读取，仍可编辑配置。")).ToArray();
+                var retryCandidates = ReadState<IReadOnlyList<CloudAutomaticRetryCandidate>>(() =>
+                    (resumeCandidateReader ?? CloudAutomaticRecovery.ReadCandidates)(c), [], "运行状态无法读取，仍可编辑配置。");
                 return (Config: c, LocalStatuses: c.Projects.Select(p => ReadState(() =>
                     p.ConfigurationError is null && CloudMapping.NeedsFirstOperation(p, c) ? "待首次上传或拉取" : ProjectListPresentation.LocalStatus(p.Source),
                     "待核验", "目录状态无法读取，仍可编辑配置。")).ToArray(), Paused: paused, Results: results, LastCompleted: lastCompleted,
-                    Health: health, History: savedHistory,
+                    Health: health, History: savedHistory, Recoveries: recoveries, RetryCandidates: retryCandidates,
                     Diagnostics: diagnostics.ToArray());
             });
             config = loaded.Config;
@@ -118,16 +133,19 @@ internal sealed partial class DesktopController(RuntimePaths paths,
             stateDiagnostics = loaded.Diagnostics;
             coordinator.Paused = loaded.Paused;
             history = loaded.History;
-            if (schedule is null) schedule = new(TimeSpan.FromMinutes(config.IntervalMinutes), TimeSpan.FromMinutes(config.StartDelayMinutes));
+            if (schedule is null) schedule = new(TimeSpan.FromMinutes(config.IntervalMinutes), TimeSpan.FromMinutes(config.StartDelayMinutes), clock);
             else if (schedule.Interval.TotalMinutes != config.IntervalMinutes) schedule.Reset(TimeSpan.FromMinutes(config.IntervalMinutes));
+            SynchronizeRetries(loaded.RetryCandidates);
             var refreshedProjects = config.Projects.Select((p, index) =>
             {
                 var result = loaded.Results[index];
                 var target = CloudAccountPresentation.Path(p.Destination);
                 return new ProjectRow(p.Destination, p.Source, target, p.ConfigurationError ?? result switch
-                { "Success" => "云端操作已完成", "Warning" => "有待处理问题", "BudgetLimited" => "预算已用完，下轮继续", "OfflineInterrupted" => "上次运行因断网中断", "Failed" => "失败", "Cancelled" => "已停止", _ => "尚未运行" }, LocalStatus: loaded.LocalStatuses[index], CloudFolderId: p.CloudFolderId, ProjectId: p.ProjectId)
+                { "Success" => "云端操作已完成", "Warning" => "有待处理问题", "BudgetLimited" => "预算已用完，下轮继续", "OfflineInterrupted" => "上次运行因断网中断",
+                    "WaitingForRetry" => "等待自动重试", "AwaitingConfirmation" => "需要确认版本", "RepairRequired" => "需要修复后重试",
+                    "Failed" => "失败", "Cancelled" or "Stopped" => "已停止", _ => "尚未运行" }, LocalStatus: loaded.LocalStatuses[index], CloudFolderId: p.CloudFolderId, ProjectId: p.ProjectId)
                 { Health = loaded.Health[index], AutomaticMode = config.GetAutomaticBackupMode(p.ProjectId),
-                    NeedsInitialization = loaded.LocalStatuses[index] == "待首次上传或拉取" };
+                    NeedsInitialization = loaded.LocalStatuses[index] == "待首次上传或拉取", Recovery = loaded.Recoveries[index] };
             }).ToArray();
             if (!projects.SequenceEqual(refreshedProjects)) projects = refreshedProjects;
             if (loaded.LastCompleted is { } value && (completed is null || value > completed)) completed = value;
@@ -138,6 +156,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
             stateDiagnostics = [];
             needsSetup = !File.Exists(Paths.ProjectConfig) && !File.Exists(Paths.SystemConfig);
             config = null;
+            recoveryRetries.Clear();
             var message = CloudAccount.RequiresAuthorization ? "需要重新授权" : !CloudAccount.Enabled ? "请先连接 OneDrive 账户并选择云端仓库。" : needsSetup ? "账户已连接，请添加或加入备份项目。" : ex is FileNotFoundException or DirectoryNotFoundException
                 ? "账户已连接，请添加或加入备份项目。" : CloudAccountPresentation.Error(ex);
 
@@ -157,9 +176,12 @@ internal sealed partial class DesktopController(RuntimePaths paths,
         ticks++;
         if (ticks % 5 == 0) await RefreshAsync();
         var previousDue = schedule?.NextDueUtc;
-        if (!stopping && config is not null && CloudAccount.Enabled && !CloudAccount.RequiresAuthorization && config.Projects.Count > 0 &&
-            schedule?.TakeDueTrigger() == true && !networkOffline)
-            await RunAsync(DesktopCommand.Backup, automatic: true);
+        if (CanDispatchScheduled)
+        {
+            if (schedule?.IsDue == true) await RunAsync(DesktopCommand.Backup, automatic: true);
+            else if (recoveryRetries.TryGetDue(out var retry))
+                await RunAsync(DesktopCommand.Backup, retry!.ProjectId, automatic: true, retryOnly: true);
+        }
         if (previousDue != schedule?.NextDueUtc) Notify();
     }
 
@@ -170,6 +192,11 @@ internal sealed partial class DesktopController(RuntimePaths paths,
         catch (NetworkInformationException) { return; }
         if (offline == networkOffline) return;
         networkOffline = offline;
+        if (!offline)
+        {
+            connectedAt = clock.GetTimestamp();
+            recoveryRetries.Connected();
+        }
         Notify();
     }
 
@@ -180,7 +207,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
         Notify();
     }
 
-    public async Task<object?> RunAsync(DesktopCommand command, string? destination = null, bool automatic = false, PullSelection? confirmedPull = null, ConfigurationDraft? joinDraft = null, PullSelection? confirmedUpload = null, bool fullPreview = false)
+    public async Task<object?> RunAsync(DesktopCommand command, string? destination = null, bool automatic = false, PullSelection? confirmedPull = null, ConfigurationDraft? joinDraft = null, PullSelection? confirmedUpload = null, bool fullPreview = false, bool retryOnly = false)
     {
         if (Busy || stopping) return null;
         automatic |= command == DesktopCommand.RunConfigured;
@@ -195,20 +222,24 @@ internal sealed partial class DesktopController(RuntimePaths paths,
             Notify();
         };
         var runtime = new BackupRuntime(Paths);
-        var task = coordinator.TryStart(token =>
+        var task = coordinator.TryStart(async token =>
         {
             if (joinDraft is not null)
             {
                 if (command != DesktopCommand.Pull || confirmedPull is null) throw new InvalidOperationException("Joining requires a confirmed pull.");
                 Editor.Save(joinDraft, ConfigurationPart.Projects);
             }
-            result = command is DesktopCommand.Preview or DesktopCommand.UploadPreview or DesktopCommand.PullPreview or DesktopCommand.Verify
+            result = operationRunner is not null ? await operationRunner(new(command, destination, automatic, retryOnly), token) :
+                command is DesktopCommand.Preview or DesktopCommand.UploadPreview or DesktopCommand.PullPreview or DesktopCommand.Verify
                 ? runtime.Preview(command is DesktopCommand.PullPreview ? SyncDirection.Pull : SyncDirection.Backup, destination, command == DesktopCommand.Verify || fullPreview, token, updates, prepareUpload: command == DesktopCommand.UploadPreview, verifyOnly: command == DesktopCommand.Verify)
                 : runtime.Execute(command == DesktopCommand.Pull ? SyncDirection.Pull : SyncDirection.Backup, destination,
-                    command == DesktopCommand.FullBackup, command == DesktopCommand.Recover, token: token, structuredProgress: updates, confirmedPull: confirmedPull, automatic: automatic, confirmedUpload: confirmedUpload);
-            return Task.CompletedTask;
+                    command == DesktopCommand.FullBackup, command == DesktopCommand.Recover, token: token, structuredProgress: updates, confirmedPull: confirmedPull, automatic: automatic, confirmedUpload: confirmedUpload, retryOnly: retryOnly);
         }, automatic);
         if (task is null) return null;
+        if (automatic && !retryOnly && destination is null) schedule?.AcceptDue();
+        var acceptedRetry = retryOnly ? RetryKey(destination) : null;
+        if (acceptedRetry is not null && !recoveryRetries.Accepted(acceptedRetry)) acceptedRetry = null;
+        DateTimeOffset? failedAttemptNotBefore = null;
         runningOperation = true;
         progressTimer.Start();
         status = command is DesktopCommand.Preview or DesktopCommand.UploadPreview or DesktopCommand.PullPreview or DesktopCommand.Verify ? "正在预览 / 核查" : "正在运行";
@@ -219,13 +250,19 @@ internal sealed partial class DesktopController(RuntimePaths paths,
             await task;
             var code = result is BackupReport b ? b.ExitCode : ((PreviewReport)result!).ExitCode;
             details = ReportPresentation.Details(result!);
-            status = result is BackupReport { Completion: "BudgetLimited" } ? "预算已用完，下轮继续" :
+            status = result is BackupReport reportStatus ? ReportStatus(reportStatus) :
                 code == 0 || code != 130 && ReportPresentation.IsOfflineOnly(details) ? "空闲" : ReportPresentation.Result(code);
-            if (result is BackupReport report) completed = report.CompletedAtUtc;
+            if (result is BackupReport report)
+            {
+                completed = report.CompletedAtUtc;
+                ObserveRetryResult(report);
+            }
         }
         catch (OperationCanceledException) { status = "已安全停止"; }
         catch (Exception ex)
         {
+            failedAttemptNotBefore = ex is CloudRequestException request ? request.RetryNotBeforeUtc :
+                ex is CloudCooldownException cooldown ? cooldown.RetryNotBeforeUtc : null;
             var offline = CloudNetworkAvailability.FriendlyMessage(ex) == CloudNetworkAvailability.Offline;
             error = offline ? null : CloudAccountPresentation.Error(ex);
             status = offline ? "空闲" : "运行失败";
@@ -236,6 +273,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
             progressTimer.Stop(); updates.Reset(); runningOperation = false; progress = null;
             UpdateNetworkAvailability();
             await RefreshAsync(includeHistory: true);
+            if (acceptedRetry is not null) recoveryRetries.ReleaseFailedAttempt(acceptedRetry, failedAttemptNotBefore);
             Notify();
         }
         return result;
@@ -302,10 +340,11 @@ internal sealed partial class DesktopController(RuntimePaths paths,
         finally { controlWrite = null; Notify(); }
     }
 
-    public void Cancel() { coordinator.CancelCurrent(); status = "正在停止，等待安全边界"; Notify(); }
+    public void Cancel() { recoveryRetries.Clear(); coordinator.CancelCurrent(); status = "正在停止，等待安全边界"; Notify(); }
     public async Task StopAsync()
     {
         stopping = true;
+        recoveryRetries.Clear();
         status = "正在安全退出";
         Notify();
         try { await coordinator.StopAsync(); }

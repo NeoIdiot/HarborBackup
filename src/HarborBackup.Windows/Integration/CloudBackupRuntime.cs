@@ -72,8 +72,9 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
     }
     public async Task<BackupReport> ExecuteAsync(SyncDirection direction, string? destination, bool full, bool recoverOnly,
         IProgress<BackupProgress>? progress, CancellationToken token, PullSelection? confirmedPull = null,
-        bool automatic = false, PullSelection? confirmedUpload = null)
+        bool automatic = false, PullSelection? confirmedUpload = null, bool retryOnly = false)
     {
+        if (retryOnly && !automatic) throw new ArgumentException("A suspended-task retry requires automatic execution.");
         if (automatic && (direction != SyncDirection.Backup || recoverOnly || confirmedPull is not null || confirmedUpload is not null))
             throw new ArgumentException("Automatic execution requires an unconfirmed backup.");
         if (!recoverOnly) destination = BackupRuntime.ResolveProjectId(config, destination);
@@ -104,14 +105,24 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                 [], [new("AutomaticBackupPaused", "后续自动备份已暂停", false)], new()) { ProjectId = p.ProjectId, CoverageComplete = false }).ToArray())
                 { CloudUploadStatus = "Paused" };
         using var drive = Open();
+        if (automatic && drive is GraphDrive graph) graph.YieldLongRetryWaits = true;
         foreach (var project in selectedProjects)
         {
             var policy = config.GetAutomaticBackupMode(project.ProjectId);
+            var projectAutomatic = automatic;
+            var projectConfirmation = confirmation;
             var bidirectional = automatic && policy == AutomaticBackupMode.Bidirectional;
             var projectDirection = automatic && policy == AutomaticBackupMode.DownloadOnly ? SyncDirection.Pull : direction;
             var files = new List<FileResult>(); var issues = new List<PreviewIssue>(); var metrics = new ReadMetrics();
             var completedMapping = false;
             var coverageComplete = false;
+            CloudResumeTaskStore? resume = null;
+            var resumed = false;
+            var publicationOnly = false;
+            HashSet<string>? originalCompleted = null;
+            HashSet<string>? completedDirectories = null;
+            var activeTime = System.Diagnostics.Stopwatch.StartNew();
+            DateTimeOffset? retryNotBefore = null;
             var networkBefore = (drive as ICloudDiagnostics)?.NetworkMetrics;
             try
             {
@@ -128,7 +139,38 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                 var problems = recovery.Problems.Where(p => p.Affects(project)).ToArray();
                 if (problems.Length > 0) throw new IOException("恢复记录未通过核验，写入已暂停；配置仍可编辑。" + Environment.NewLine +
                     string.Join(Environment.NewLine, problems.Select(p => p.Description)));
-                if (!recoverOnly && automatic && CloudMapping.NeedsFirstOperation(project, config))
+                if (!recoverOnly && automatic)
+                {
+                    resume = CloudResumeTaskStore.ReadActive(project, config);
+                    resumed = resume?.Value.State == CloudResumeState.NetworkWait || !retryOnly && resume?.Value.State == CloudResumeState.BudgetWait;
+                    if (resumed && resume!.Value.Automatic && resume.Value.AutomaticMode != policy)
+                    {
+                        throw new DeferredOperationException("Automatic policy changed since the interrupted task. Review the original operation.");
+                    }
+                    if (resumed && resume!.Value.RetryNotBeforeUtc > (timeProvider ?? TimeProvider.System).GetUtcNow())
+                    {
+                        runs.Add(new(project.Destination, [], [new("NetworkRetryWaiting", "网络操作将在重试等待结束后自动继续。", false)
+                            { FailureKind = FileFailureKind.Network, Recovery = RecoveryDisposition.AutomaticRetry }], metrics)
+                        { ProjectId = project.ProjectId, Recovery = RecoveryDisposition.AutomaticRetry, RetryNotBeforeUtc = resume.Value.RetryNotBeforeUtc });
+                        continue;
+                    }
+                    if (retryOnly && !resumed) continue;
+                    if (resumed)
+                    {
+                        projectAutomatic = resume!.Value.Automatic;
+                        projectConfirmation = resume.Value.Selection;
+                        projectDirection = projectAutomatic ? projectDirection : resume.Value.Direction;
+                        bidirectional = projectAutomatic && policy == AutomaticBackupMode.Bidirectional;
+                        publicationOnly = resume.Value.PublicationOnly;
+                        originalCompleted = resume.Value.Completed.Where(c => c.Hash is not null || c.Directory)
+                            .Select(c => c.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        completedDirectories = resume.Value.Completed.Where(c => c.Directory)
+                            .Select(c => c.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        if (retryOnly && projectAutomatic) budget.Restore(resume.Value.ReservedBytes, resume.Value.ActiveMilliseconds);
+                        activeTime.Restart();
+                    }
+                }
+                if (!recoverOnly && automatic && CloudMapping.NeedsFirstOperation(project, config) && !(resumed && !projectAutomatic))
                 {
                     runs.Add(new(project.Destination, [], [new("MappingAwaitingOperation", "本地目录已切换，请先手动上传或拉取。", false)], metrics) { ProjectId = project.ProjectId });
                     continue;
@@ -139,21 +181,65 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                     retryUploads: config.Projects.Any(p => CloudMapping.Bind(p, config) == CloudMapping.Bind(project, config)));
                 if (!recoverOnly)
                 {
-                    if (!automatic && direction == SyncDirection.Backup && confirmation is null && session.Pending)
-                        await session.RecoverAsync(token, files.Add, retryUploads: true, backupOnly: true);
+                    if (!automatic && direction == SyncDirection.Backup && confirmation is null)
+                    {
+                        if (session.Pending) await session.RecoverAsync(token, files.Add, retryUploads: true, backupOnly: true);
+                        if (!session.Pending && files.All(f => f.Error is null)) CloudResumeTaskStore.StopActive(project, config);
+                    }
+                    if (!resumed)
+                        resume = CloudResumeTaskStore.Create(project, config, projectDirection, automatic, confirmation);
+                    if (!retryOnly)
+                    {
+                        resume!.ResetBudget(budget.ReservedBytes, budget.ElapsedMilliseconds);
+                        activeTime.Restart();
+                    }
+                    session.ResumeTask = resume;
+                    if (automatic)
+                    {
+                        var serviceNotBefore = Later(CloudAutomaticRecovery.RetryNotBefore(config), (drive as ICloudDiagnostics)?.RetryNotBeforeUtc);
+                        if (serviceNotBefore > (timeProvider ?? TimeProvider.System).GetUtcNow())
+                            throw new CloudCooldownException(serviceNotBefore.Value);
+                    }
+                    if (resumed)
+                    {
+                        resume!.SetState(CloudResumeState.Running);
+                        if (!publicationOnly) await session.RecoverAutomaticAsync(resume, budget, retryOnly, token, files.Add);
+                        retryNotBefore = Later(retryNotBefore, session.AutomaticRetryNotBeforeUtc);
+                    }
+                    if (budget.StopReason is not null) issues.Add(new(budget.StopReason, budget.StopReason, false));
+                    if (!publicationOnly && budget.StopReason is null)
+                    {
+                    files.RemoveAll(f => f.Error == "OriginalVersionRestored" || projectAutomatic && f.Error == "ChangedSourceOperationClosed");
                     var retryResults = files.GroupBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(g => g.Key, g => g.Last(), StringComparer.OrdinalIgnoreCase);
+                    pendingFiles = CloudMapping.ScanPending(config).Files;
                     var affected = pendingFiles.Where(p => p.Affects(project) &&
                         (p.Mapping.Binding != CloudMapping.Bind(project, config) || session.Pending)).ToArray();
                     var retainedCurrentTransactions = affected.Any(p => p.Mapping.Binding == CloudMapping.Bind(project, config));
                     progress?.Report(new(BackupPhase.Scanning, project.Destination));
                     var read = await session.ReadAsync(full, token, progress, metrics, deferContentReads: projectDirection == SyncDirection.Backup,
-                        allowMissingRoot: !automatic && projectDirection == SyncDirection.Pull); metrics = read.Snapshot.Metrics;
-                    var blocked = automatic ? affected : affected.Where(p => !read.Snapshot.Files.Any(f => p.CanRestartPull(project, f, direction))).ToArray();
-                    if (blocked.Length > 0) issues.Add(new("PreviousMappingPending",
-                        "未完成操作涉及的文件已跳过；其他文件可继续。恢复仍使用原目录，旧材料已保留。", false));
+                        allowMissingRoot: !projectAutomatic && projectDirection == SyncDirection.Pull); metrics = read.Snapshot.Metrics;
+                    resume!.SetScope(read.Snapshot.Files.Select(f => f.RelativePath));
+                    var originalScope = resumed ? resume.Value.Scope?.ToHashSet(StringComparer.OrdinalIgnoreCase) : null;
+                    var authorizationScope = resume.Value.Scope?.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var pendingScope = authorizationScope?.Where(relative => completedDirectories?.Contains(relative) != true).ToArray();
+                    var independentNetworkJournals = affected.Length > 0 && pendingScope is not null
+                        ? CloudResumeTaskStore.VerifiedWaitingJournalIds(project, config) : new HashSet<string>(StringComparer.Ordinal);
+                    var scopedAffected = pendingScope is null ? affected : affected
+                        .Where(p => pendingScope.Any(relative => p.Affects(project, relative)) ||
+                            p.Mapping.Binding != CloudMapping.Bind(project, config) || p.JournalId is null ||
+                            !independentNetworkJournals.Contains(p.JournalId)).ToArray();
+                    var blocked = automatic ? scopedAffected : scopedAffected.Where(p => !read.Snapshot.Files.Any(f => p.CanRestartPull(project, f, direction))).ToArray();
+                    if (blocked.Length > 0)
+                    {
+                        var networkPending = blocked.All(p => p.Mapping.Binding == CloudMapping.Bind(project, config) && resume.CanRetry(p.Path));
+                        issues.Add(new("PreviousMappingPending", "未完成操作涉及的文件已跳过；其他文件可继续。恢复仍使用原目录，旧材料已保留。", false)
+                        { FailureKind = networkPending ? FileFailureKind.Network : FileFailureKind.None,
+                            Recovery = networkPending ? RecoveryDisposition.AutomaticRetry : RecoveryDisposition.AwaitingConfirmation });
+                    }
                     session.Progress = (phase, path) => progress?.Report(new(phase, project.Destination, path, files.Count, read.Snapshot.Files.Count, metrics.HashBytes));
-                    var selected = confirmation?.Files.ToDictionary(f => f.Path, StringComparer.OrdinalIgnoreCase);
+                    var selected = projectConfirmation?.Files.ToDictionary(f => f.Path, StringComparer.OrdinalIgnoreCase);
+                    var authorizedJournalPaths = resume.Value.Journals.Select(j => j.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
                     var incompleteSelection = blocked.Length > 0;
                     if (selected is not null)
                         foreach (var missing in selected.Keys.Except(read.Snapshot.Files.Select(f => f.RelativePath), StringComparer.OrdinalIgnoreCase))
@@ -181,14 +267,26 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                                     { FailureKind = FileFailureKind.Budget, Direction = automatic ? fileDirection : null }, false);
                             }
                             if (retryResults.TryGetValue(file.RelativePath, out var retry)) return (retry, false);
+                            // A previously completed directory observed on both sides needs no
+                            // write. Independent pending child files must not turn it into a
+                            // request to resolve their transactions; every write still passes
+                            // the full overlap checks below.
+                            if (completedDirectories?.Contains(file.RelativePath) == true &&
+                                file.Source.Kind == ObservationKind.Directory && file.Target.Kind == ObservationKind.Directory)
+                                return (new(file.RelativePath, FileAction.Directory, false) { Direction = automatic ? fileDirection : null }, false);
+                            if (resumed && resume.GetRecovery(file.RelativePath) is RecoveryDisposition.AwaitingConfirmation or RecoveryDisposition.RepairRequired or RecoveryDisposition.Stopped)
+                                return (new(file.RelativePath, FileAction.Deferred, false, "PendingFileOperation")
+                                { Recovery = resume.GetRecovery(file.RelativePath), Direction = automatic ? fileDirection : null }, false);
                             if (affected.Any(p => automatic ? p.Affects(project, file.RelativePath) : p.Blocks(project, file, fileDirection)))
                                 return (new(file.RelativePath, FileAction.Deferred, false, "PendingFileOperation")
-                                    { Direction = automatic ? fileDirection : null }, false);
+                                    { Recovery = resume.CanRetry(file.RelativePath) && authorizedJournalPaths.Contains(file.RelativePath) ? RecoveryDisposition.AutomaticRetry : RecoveryDisposition.AwaitingConfirmation,
+                                        FailureKind = resume.CanRetry(file.RelativePath) && authorizedJournalPaths.Contains(file.RelativePath) ? FileFailureKind.Network : FileFailureKind.None,
+                                        Direction = automatic ? fileDirection : null }, false);
                             progress?.Report(new(BackupPhase.Processing, project.Destination, file.RelativePath, files.Count, read.Snapshot.Files.Count, metrics.HashBytes));
                             var heads = read.Heads.GetValueOrDefault(file.RelativePath) ?? [];
                             preparingLocal = true;
                             await using var prepared = projectDirection == SyncDirection.Backup
-                                ? await session.PrepareBackupAsync(file, heads, token, force: confirmedUpload is not null) : null;
+                                ? await session.PrepareBackupAsync(file, heads, token, force: projectConfirmation is not null && projectDirection == SyncDirection.Backup) : null;
                             if (prepared is not null) file = prepared.File;
                             if (bidirectional)
                                 fileDirection = AutomaticBackupDecision.DirectionFor(session.Decide(file, heads, SyncDirection.Backup), file.Source, file.Target);
@@ -202,43 +300,76 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                             preparingLocal = false;
                             if (affected.Any(p => automatic ? p.Affects(project, file.RelativePath) : p.Blocks(project, file, fileDirection)))
                                 return (new(file.RelativePath, FileAction.Deferred, false, "PendingFileOperation")
-                                    { Direction = automatic ? fileDirection : null }, false);
+                                    { Recovery = resume.CanRetry(file.RelativePath) && authorizedJournalPaths.Contains(file.RelativePath) ? RecoveryDisposition.AutomaticRetry : RecoveryDisposition.AwaitingConfirmation,
+                                        FailureKind = resume.CanRetry(file.RelativePath) && authorizedJournalPaths.Contains(file.RelativePath) ? FileFailureKind.Network : FileFailureKind.None,
+                                        Direction = automatic ? fileDirection : null }, false);
                             var restarts = automatic ? [] : affected.Where(p => p.CanRestartPull(project, file, fileDirection)).ToArray();
-                            var decision = PendingCloudFile.Describe(session.Decide(file, heads, fileDirection, confirmation?.EstablishBaseline ?? false), restarts);
+                            var decision = PendingCloudFile.Describe(session.Decide(file, heads, fileDirection, projectConfirmation?.EstablishBaseline ?? false), restarts);
                             action = decision.Action;
+                            if (originalCompleted?.Contains(file.RelativePath) == true && !resume.CompletedEqual(file, decision))
+                            {
+                                resume.SetRecovery(file.RelativePath, RecoveryDisposition.AwaitingConfirmation);
+                                return (new(file.RelativePath, FileAction.Deferred, false, "CompletedTaskFileChanged")
+                                { Recovery = RecoveryDisposition.AwaitingConfirmation, Direction = automatic ? fileDirection : null }, false);
+                            }
                             if (decision.Action == FileAction.Deferred && file.Source.Kind is ObservationKind.Unavailable or ObservationKind.Unstable)
+                            {
+                                resume.SetRecovery(file.RelativePath, RecoveryDisposition.RepairRequired);
                                 return (new(file.RelativePath, decision.Action, false, file.Source.Error)
-                                    { FailureKind = FileFailureKind.FileUnavailable, Direction = automatic ? fileDirection : null }, false);
+                                    { FailureKind = FileFailureKind.FileUnavailable, Recovery = RecoveryDisposition.RepairRequired, Direction = automatic ? fileDirection : null }, false);
+                            }
                             if (selected is not null)
                             {
-                                if (decision.Action is not (FileAction.Copy or FileAction.CreateDirectory or FileAction.Equal) ||
-                                    PendingCloudFile.Confirm(session.ConfirmPull(file, heads, decision, confirmation!.EstablishBaseline, fileDirection), restarts).Confirmation != selected[file.RelativePath].Confirmation)
-                                    return (new(file.RelativePath, FileAction.Deferred, false, "PullPreviewChanged"), false);
+                                var restored = resumed && resume.MatchesRestored(file, heads);
+                                var createdDirectory = resumed && selected[file.RelativePath].IsNew && resume.WasReserved(file.RelativePath) &&
+                                    decision.Action == FileAction.Directory && file.Source.Kind == ObservationKind.Directory && file.Target.Kind == ObservationKind.Directory;
+                                if (decision.Action is not (FileAction.Copy or FileAction.CreateDirectory or FileAction.Equal) && !createdDirectory ||
+                                    !resume.CompletedEqual(file, decision) && !restored && !createdDirectory &&
+                                    PendingCloudFile.Confirm(session.ConfirmPull(file, heads, decision, projectConfirmation!.EstablishBaseline, fileDirection), restarts).Confirmation != selected[file.RelativePath].Confirmation)
+                                {
+                                    resume.SetRecovery(file.RelativePath, RecoveryDisposition.AwaitingConfirmation);
+                                    return (new(file.RelativePath, FileAction.Deferred, false, "PullPreviewChanged") { Recovery = RecoveryDisposition.AwaitingConfirmation }, false);
+                                }
                             }
                             var transferBytes = decision.Action == FileAction.Copy && fileDirection == SyncDirection.Pull
                                 ? file.Target.Version?.Length ?? 0 : file.Source.Version?.Length ?? 0;
-                            if (!budget.TryStart(transferBytes,
-                                decision.Action is FileAction.Copy or FileAction.CreateDirectory || decision.Protection != ProtectionKind.None))
+                            var writes = decision.Action is FileAction.Copy or FileAction.CreateDirectory || decision.Protection != ProtectionKind.None;
+                            var alreadyReserved = resume.WasReserved(file.RelativePath) && !resume.HasCompleted(file.RelativePath);
+                            if (!budget.TryStart(alreadyReserved ? 0 : transferBytes, !alreadyReserved && writes))
                             {
                                 Interlocked.Exchange(ref stopDispatch, 1);
                                 return (new(file.RelativePath, FileAction.Deferred, false, budget.StopReason)
                                     { FailureKind = FileFailureKind.Budget, Direction = automatic ? fileDirection : null }, false);
                             }
+                            if (writes) resume.Reserve(file.RelativePath, transferBytes);
                             if (decision.Action == FileAction.Copy)
                                 foreach (var pendingFile in restarts) pendingFile.Restart!.Retain(config);
                             await session.ApplyAsync(file, heads, fileDirection, decision, token);
+                            if ((writes || projectConfirmation is not null) && (decision.Action is FileAction.Copy or FileAction.CreateDirectory or FileAction.Equal or FileAction.Directory))
+                                resume.Complete(file.RelativePath, fileDirection == SyncDirection.Backup ? file.Source.Version?.Sha256 :
+                                    decision.Action == FileAction.Copy ? resume.PublishedContentHash(file.RelativePath) : file.Source.Version?.Sha256,
+                                    file.Source.Kind == ObservationKind.Directory || file.Target.Kind == ObservationKind.Directory);
+                            if (decision.Action is FileAction.ConflictUnresolved or FileAction.NeedsPull or FileAction.NeedsPush or FileAction.TypeConflict or FileAction.Deferred)
+                                resume.SetRecovery(file.RelativePath, RecoveryDisposition.AwaitingConfirmation);
                             return (new(file.RelativePath, decision.Action, decision.Action is FileAction.Copy or FileAction.CreateDirectory,
                                 decision.Reason == "CloudMetadataRequired" ? "CloudMetadataRequired" : null)
                                 { Direction = automatic ? fileDirection : null }, false);
                         }
                         catch (OperationCanceledException)
-                        { Interlocked.Exchange(ref stopDispatch, 1); return (new(file.RelativePath, action, false, "Cancelled")
-                            { FailureKind = FileFailureKind.Cancelled, Direction = automatic ? fileDirection : null }, true); }
+                        { resume.SetRecovery(file.RelativePath, RecoveryDisposition.Stopped); Interlocked.Exchange(ref stopDispatch, 1); return (new(file.RelativePath, action, false, "Cancelled")
+                            { FailureKind = FileFailureKind.Cancelled, Recovery = RecoveryDisposition.Stopped, Direction = automatic ? fileDirection : null }, true); }
                         catch (Exception ex)
                         {
                             var kind = FileFailurePolicy.Classify(ex, preparingLocal);
+                            var recoveryDisposition = RecoveryFor(kind, ex);
+                            resume.SetRecovery(file.RelativePath, recoveryDisposition);
+                            if (recoveryDisposition == RecoveryDisposition.AutomaticRetry && !resume.CanRetry(file.RelativePath)) recoveryDisposition = RecoveryDisposition.AwaitingConfirmation;
+                            if (ex is CloudRequestException request) lock (files)
+                                retryNotBefore = Later(retryNotBefore, request.RetryNotBeforeUtc);
+                            if (ex is CloudCooldownException cooldown) lock (files)
+                                retryNotBefore = Later(retryNotBefore, cooldown.RetryNotBeforeUtc);
                             if (kind != FileFailureKind.FileUnavailable) Interlocked.Exchange(ref stopDispatch, 1);
-                            return (new(file.RelativePath, action, false, ex.Message) { FailureKind = kind, Direction = automatic ? fileDirection : null }, false);
+                            return (new(file.RelativePath, action, false, ex.Message) { FailureKind = kind, Recovery = recoveryDisposition, Direction = automatic ? fileDirection : null }, false);
                         }
                         finally { lock (metrics) metrics.FileProcessingMilliseconds += elapsed.ElapsedMilliseconds; }
                     }
@@ -260,6 +391,8 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                     {
                         foreach (var file in read.Snapshot.Files)
                         {
+                            if (originalScope is not null && !originalScope.Contains(file.RelativePath))
+                            { incompleteSelection = true; continue; }
                             if (selected is not null && !selected.ContainsKey(file.RelativePath))
                             {
                                 var decision = session.Decide(file, read.Heads.GetValueOrDefault(file.RelativePath) ?? [], direction);
@@ -286,17 +419,18 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                     }
                     token.ThrowIfCancellationRequested();
                     if (budget.StopReason is not null) issues.Add(new(budget.StopReason, budget.StopReason, false));
-                    if (files.Any(f => f.Error == CloudNetworkAvailability.Offline) && session.Pending)
-                        issues.Add(new("PendingOperationsRetained", "未完成操作涉及的文件暂不可写入；其他文件仍可选择，旧恢复材料会保留。", false));
-                    if (!automatic && !incompleteSelection && !session.Pending && files.All(f => f.Error is null &&
+                    if (files.Any(f => f.FailureKind == FileFailureKind.Network) && session.Pending)
+                        issues.Add(new("PendingOperationsRetained", "网络恢复后将核验并继续原操作；恢复材料已保留。", false)
+                        { FailureKind = FileFailureKind.Network, Recovery = RecoveryDisposition.AutomaticRetry });
+                    if (!projectAutomatic && !incompleteSelection && !session.Pending && files.All(f => f.Error is null &&
                         f.Action is FileAction.Copy or FileAction.CreateDirectory or FileAction.Equal or FileAction.Directory or FileAction.Absent or FileAction.SourceOnly or FileAction.TargetOnly))
                     {
-                        if (direction == SyncDirection.Pull && read.Snapshot.Files.Count == 0)
+                        if (projectDirection == SyncDirection.Pull && read.Snapshot.Files.Count == 0)
                         {
                             FileSystem.SafePath.Validate(project.Source);
                             Directory.CreateDirectory(project.Source);
                         }
-                        await session.CompleteMappingAsync(direction, token);
+                        await session.CompleteMappingAsync(projectDirection, token);
                         completedMapping = true;
                     }
                     coverageComplete = !incompleteSelection && budget.StopReason is null && !session.Pending &&
@@ -308,27 +442,93 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
                         catch (Exception ex) when (ex is IOException or HttpRequestException or UnauthorizedAccessException)
                         { issues.Add(new("MetadataCheckpointPending", "文件操作已完成，元数据检查点暂未发布；原始文件证据保留。" + Environment.NewLine + ex.Message, false)); }
                     }
+                    }
                 }
                 files.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Path, b.Path));
                 if (completedMapping) CloudMapping.MarkReady(project, config);
                 // Immutable per-device observations. Failed publication stays in the local outbox.
                 progress?.Report(new(BackupPhase.Publishing, project.Destination, HashedBytes: metrics.HashBytes));
-                try { await new CloudObservationPublisher(config, drive, sharedRepository: session.Repository).PublishAsync(project, files, metrics, token); }
+                try { await new CloudObservationPublisher(config, drive, sharedRepository: session.Repository).PublishAsync(project, files, metrics, token, drainOnly: publicationOnly); }
                 catch (OperationCanceledException) { throw; }
-                catch (Exception ex) { issues.Add(new("DeviceStatusPending", "文件操作结果已记录；设备状态暂未上报，下次运行会重试。" + Environment.NewLine + ex.Message, false)); }
+                catch (Exception ex)
+                {
+                    var kind = FileFailurePolicy.Classify(ex, false);
+                    if (ex is CloudRequestException request) retryNotBefore = Later(retryNotBefore, request.RetryNotBeforeUtc);
+                    if (ex is CloudCooldownException cooldown) retryNotBefore = Later(retryNotBefore, cooldown.RetryNotBeforeUtc);
+                    issues.Add(new("DeviceStatusPending", "文件操作结果已记录；设备状态暂未上报，下次运行会重试。" + Environment.NewLine + ex.Message, false)
+                    { FailureKind = kind, Recovery = RecoveryFor(kind, ex) });
+                    if (!files.Any(f => f.NeedsAttention()) && !session.Pending) publicationOnly = true;
+                }
             }
             catch (OperationCanceledException) { cancelled = true; }
-            catch (Exception ex) { issues.Add(new("CloudOperationFailed", ex.Message)); }
+            catch (Exception ex)
+            {
+                var kind = FileFailurePolicy.Classify(ex, false);
+                if (ex is CloudRequestException request) retryNotBefore = Later(retryNotBefore, request.RetryNotBeforeUtc);
+                if (ex is CloudCooldownException cooldown) retryNotBefore = Later(retryNotBefore, cooldown.RetryNotBeforeUtc);
+                issues.Add(new("CloudOperationFailed", ex.Message) { FailureKind = kind, Recovery = RecoveryFor(kind, ex) });
+            }
+            retryNotBefore = Later(retryNotBefore, (drive as ICloudDiagnostics)?.RetryNotBeforeUtc);
+            var disposition = cancelled ? RecoveryDisposition.Stopped : ResultRecovery(files, issues);
+            var taskRetryScheduled = false;
+            if (disposition == RecoveryDisposition.AutomaticRetry && resume is null)
+                disposition = RecoveryDisposition.AwaitingConfirmation;
+            if (resume is not null)
+            {
+                var trustedScope = resume.Value.Automatic || resume.Value.Scope is not null;
+                taskRetryScheduled = !cancelled && budget.StopReason is null && trustedScope &&
+                    (files.Any(f => f.Recovery == RecoveryDisposition.AutomaticRetry && resume.CanRetry(f.Path)) ||
+                     issues.Any(i => i.Recovery == RecoveryDisposition.AutomaticRetry && i.FailureKind == FileFailureKind.Network));
+                if (disposition == RecoveryDisposition.AutomaticRetry && !taskRetryScheduled)
+                    disposition = RecoveryDisposition.AwaitingConfirmation;
+                resume.AddActiveTime(activeTime.ElapsedMilliseconds);
+                resume.SetState(taskRetryScheduled ? CloudResumeState.NetworkWait : !cancelled && budget.StopReason is not null && trustedScope ? CloudResumeState.BudgetWait : disposition switch
+                {
+                    RecoveryDisposition.AutomaticRetry => CloudResumeState.NetworkWait,
+                    RecoveryDisposition.Stopped => CloudResumeState.Stopped,
+                    RecoveryDisposition.AwaitingConfirmation => CloudResumeState.AwaitingConfirmation,
+                    RecoveryDisposition.RepairRequired => CloudResumeState.RepairRequired,
+                    _ => budget.StopReason is not null ? CloudResumeState.BudgetWait : CloudResumeState.Completed
+                }, retryNotBefore, publicationOnly);
+            }
+            if (!taskRetryScheduled)
+            {
+                for (var i = 0; i < files.Count; i++)
+                    if (files[i].Recovery == RecoveryDisposition.AutomaticRetry) files[i] = files[i] with { Recovery = disposition };
+                for (var i = 0; i < issues.Count; i++)
+                    if (issues[i].Recovery == RecoveryDisposition.AutomaticRetry) issues[i] = issues[i] with { Recovery = disposition };
+            }
             CaptureNetworkMetrics(drive, networkBefore, metrics);
             runs.Add(new(project.Destination, files, issues, metrics) { ProjectId = project.ProjectId,
+                Recovery = disposition, RetryNotBeforeUtc = taskRetryScheduled ? resume?.Value.RetryNotBeforeUtc ?? retryNotBefore : null,
                 CoverageComplete = coverageComplete && !cancelled && issues.Count == 0 && !recoverOnly });
             if (cancelled || (!config.Preview.ContinueOnError && (issues.Any(i => i.IsFailure) || files.Any(f => f.Error is not null)))) break;
         }
+        if (cancelled && !recoverOnly)
+            foreach (var project in selectedProjects)
+            {
+                try
+                {
+                    CloudResumeTaskStore.StopActive(project, config);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or FormatException)
+                { /* Unreadable evidence is retained and is never an automatic retry candidate. */ }
+            }
         var result = new BackupReport(mode, started, DateTimeOffset.UtcNow, runs, cancelled)
         { BudgetStopReason = budget.StopReason };
         result = result with { CloudUploadStatus = result.Completion switch
             { "Cancelled" => "Incomplete", "BudgetLimited" => "BudgetLimited", "Completed" => "CloudOperationsConfirmed", _ => "NeedsAttention" } };
         return RunReportPersistence.Save(result, value => RunStatusStore.Write(config, value), value => RunStatusStore.Log(config, value));
+    }
+    private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) => a is null ? b : b is null || a > b ? a : b;
+    private static RecoveryDisposition RecoveryFor(FileFailureKind kind, Exception error) => FileFailurePolicy.Recovery(kind, error);
+    private static RecoveryDisposition ResultRecovery(IReadOnlyList<FileResult> files, IReadOnlyList<PreviewIssue> issues)
+    {
+        var values = files.Select(f => f.Recovery).Concat(issues.Select(i => i.Recovery)).ToArray();
+        if (values.Contains(RecoveryDisposition.RepairRequired)) return RecoveryDisposition.RepairRequired;
+        if (values.Contains(RecoveryDisposition.AwaitingConfirmation) || files.Any(f => f.NeedsAttention() && f.Recovery == RecoveryDisposition.None && f.FailureKind != FileFailureKind.Budget) ||
+            issues.Any(i => i.IsFailure && i.Recovery == RecoveryDisposition.None)) return RecoveryDisposition.AwaitingConfirmation;
+        return values.Contains(RecoveryDisposition.AutomaticRetry) ? RecoveryDisposition.AutomaticRetry : RecoveryDisposition.None;
     }
     private string AutomaticReportMode(IReadOnlyList<ProjectDefinition> projects)
     {

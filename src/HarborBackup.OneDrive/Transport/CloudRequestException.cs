@@ -14,17 +14,26 @@ public sealed class CloudRequestException : IOException
     public string Host { get; }
     public int Attempt { get; }
     public long ElapsedMilliseconds { get; }
+    public DateTimeOffset? RetryNotBeforeUtc { get; }
 
-    private CloudRequestException(HttpStatusCode status, string operation, string code, string? requestId, NetworkRequestContext context)
+    private CloudRequestException(HttpStatusCode status, string operation, string code, string? requestId, NetworkRequestContext context,
+        DateTimeOffset? retryNotBeforeUtc)
         : base($"OneDrive: {operation} failed (HTTP {(int)status}; code: {code}; request ID: {requestId ?? "unavailable"}; host: {context.Host}; attempt: {context.Attempt}; elapsedMs: {context.ElapsedMilliseconds}).")
     {
         StatusCode = status; Operation = operation; ErrorCode = code; RequestId = requestId;
         Host = context.Host; Attempt = context.Attempt; ElapsedMilliseconds = context.ElapsedMilliseconds;
+        RetryNotBeforeUtc = retryNotBeforeUtc;
     }
 
     internal static async Task<CloudRequestException> ReadAsync(HttpResponseMessage response, CancellationToken token)
     {
         var operation = OperationFor(response.RequestMessage);
+        var now = DateTimeOffset.UtcNow;
+        DateTimeOffset? notBefore = response.Headers.RetryAfter?.Date;
+        if (response.Headers.RetryAfter?.Delta is { } delta)
+            notBefore = delta > DateTimeOffset.MaxValue - now ? DateTimeOffset.MaxValue : now + delta;
+        if (response.RequestMessage is { } request && request.Options.TryGetValue(NetworkRequestContext.RetryNotBeforeKey, out var gateDue) &&
+            (notBefore is null || gateDue > notBefore)) notBefore = gateDue;
         var code = "unknown";
         string? requestId = response.Headers.TryGetValues("request-id", out var ids) ? SafeId(ids.FirstOrDefault()) : null;
         const int limit = 32 * 1024;
@@ -55,7 +64,8 @@ public sealed class CloudRequestException : IOException
         }
         catch (JsonException) { /* Non-JSON errors still retain HTTP status and operation. */ }
         catch (IOException) { /* The error response itself may be truncated. */ }
-        return new(response.StatusCode, operation, code, requestId, NetworkRequestContext.For(response.RequestMessage));
+        catch (HttpRequestException) { /* Preserve the received status and cooldown when its error body cannot be read. */ }
+        return new(response.StatusCode, operation, code, requestId, NetworkRequestContext.For(response.RequestMessage), notBefore);
     }
 
     private static string? SafeCode(string? value) => value is { Length: > 0 and <= 80 } &&

@@ -1251,4 +1251,8 @@ Evidence is local SHA-256 and cloud metadata; cloud file bodies are not download
   <data name="自动下载备份" xml:space="preserve"><value>Automatic download backup</value></data>
   <data name="自动混合备份" xml:space="preserve"><value>Automatic backup (mixed modes)</value></data>
   <data name="预览上传" xml:space="preserve"><value>Preview upload</value></data>
+  <data name="等待自动重试" xml:space="preserve"><value>Waiting to retry automatically</value></data>
+  <data name="需要确认版本" xml:space="preserve"><value>Choose a version to continue</value></data>
+  <data name="需要修复后重试" xml:space="preserve"><value>Action required before retrying</value></data>
+  <data name="CompletedTaskFileChanged" xml:space="preserve"><value>This file changed again after the original task completed. Its new version was skipped during this continuation; preview again or wait for the next normal comparison.</value></data>
 </root>

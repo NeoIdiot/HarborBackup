@@ -1251,4 +1251,8 @@
   <data name="自动下载备份" xml:space="preserve"><value>自动下载备份</value></data>
   <data name="自动混合备份" xml:space="preserve"><value>自动混合备份</value></data>
   <data name="预览上传" xml:space="preserve"><value>预览上传</value></data>
+  <data name="等待自动重试" xml:space="preserve"><value>等待自动重试</value></data>
+  <data name="需要确认版本" xml:space="preserve"><value>需要确认版本</value></data>
+  <data name="需要修复后重试" xml:space="preserve"><value>需要修复后重试</value></data>
+  <data name="CompletedTaskFileChanged" xml:space="preserve"><value>此文件在原任务完成后再次变化，本次恢复已跳过新版本；请重新预览或等待下一次正常比较。</value></data>
 </root>

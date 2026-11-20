@@ -27,7 +27,7 @@ public sealed class BackupRuntime(RuntimePaths paths)
 
     public BackupReport Execute(SyncDirection direction, string? destination = null, bool fullCheck = false,
         bool recoverOnly = false, CancellationToken token = default, IProgress<BackupProgress>? structuredProgress = null, PullSelection? confirmedPull = null,
-        bool automatic = false, PullSelection? confirmedUpload = null)
+        bool automatic = false, PullSelection? confirmedUpload = null, bool retryOnly = false)
     {
         if (direction == SyncDirection.Pull && string.IsNullOrWhiteSpace(destination) && !recoverOnly)
             throw new ArgumentException("Pull requires an explicit destination project.");
@@ -35,7 +35,7 @@ public sealed class BackupRuntime(RuntimePaths paths)
         var config = Load();
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         deadline.CancelAfter(TimeSpan.FromMinutes(config.ExecutionTimeLimitMinutes));
-        return new CloudBackupRuntime(config).ExecuteAsync(direction, destination, fullCheck, recoverOnly, structuredProgress, deadline.Token, confirmedPull, automatic, confirmedUpload).GetAwaiter().GetResult();
+        return new CloudBackupRuntime(config).ExecuteAsync(direction, destination, fullCheck, recoverOnly, structuredProgress, deadline.Token, confirmedPull, automatic, confirmedUpload, retryOnly).GetAwaiter().GetResult();
     }
 
     public static IReadOnlyList<ProjectDefinition> Select(ConfigurationSnapshot config, string? projectId)

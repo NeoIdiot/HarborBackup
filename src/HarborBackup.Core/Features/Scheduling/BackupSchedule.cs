@@ -16,10 +16,17 @@ public sealed class BackupSchedule
         origin = this.clock.GetTimestamp();
     }
     public DateTimeOffset NextDueUtc => clock.GetUtcNow() + Remaining;
+    public bool IsDue => clock.GetElapsedTime(origin) >= delay;
     private TimeSpan Remaining => TimeSpan.FromTicks(Math.Max(0, (delay - clock.GetElapsedTime(origin)).Ticks));
     public bool TakeDueTrigger()
     {
-        if (clock.GetElapsedTime(origin) < delay) return false;
+        return AcceptDue();
+    }
+    // Call only after an execution has actually been accepted. Offline, paused or
+    // busy callers may inspect IsDue without consuming their one merged trigger.
+    public bool AcceptDue()
+    {
+        if (!IsDue) return false;
         origin = clock.GetTimestamp();
         delay = Interval;
         return true;

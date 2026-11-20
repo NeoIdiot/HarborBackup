@@ -10,13 +10,18 @@ internal sealed record DetailRow(string Project, string Path, string Action, str
     bool SystemRow = false, string? DetailKey = null, object?[]? DetailArguments = null)
 {
     public string ProjectId { get; init; } = "";
-    internal string? ActionProjectId => !SystemRow && FileVersion.IsHash(ProjectId) ? ProjectId : null;
+    internal string? ActionProjectId => !SystemRow && Recovery is not (RecoveryDisposition.AutomaticRetry or RecoveryDisposition.RepairRequired or RecoveryDisposition.Stopped) &&
+        FileVersion.IsHash(ProjectId) ? ProjectId : null;
     public string DisplayProject => SystemRow ? UiText.Text(Project) : Project;
-    public string DisplayAction => UiText.Text(Action);
-    public string DisplayDetails => (FailureKind == FileFailureKind.None ? "" : UiText.Text(ReportPresentation.FailureCaption(FailureKind)) + Environment.NewLine) +
+    public string DisplayAction => UiText.Text(Recovery == RecoveryDisposition.None ? Action : ReportPresentation.RecoveryCaption(Recovery));
+    public string DisplayDetails => (Recovery != RecoveryDisposition.None ? UiText.Text(ReportPresentation.RecoveryCaption(Recovery)) + Environment.NewLine :
+        FailureKind == FileFailureKind.None ? "" : UiText.Text(ReportPresentation.FailureCaption(FailureKind)) + Environment.NewLine) +
         CloudAccountPresentation.Message(UiText.Text(DetailKey ?? Details, DetailArguments ?? []));
     public FileFailureKind FailureKind { get; init; }
-    public bool IsOfflineIssue => Attention && CloudRunStatus.IsOfflineIssue(Action, Details);
+    public RecoveryDisposition Recovery { get; init; }
+    public bool IsAutomaticRetry => Recovery == RecoveryDisposition.AutomaticRetry &&
+        FailureKind is not (FileFailureKind.Authorization or FileFailureKind.RecoveryRequired);
+    public bool IsOfflineIssue => Attention && Recovery == RecoveryDisposition.None && CloudRunStatus.IsOfflineIssue(Action, Details);
     public VerificationCategory? Verification { get; init; }
     public string DisplayVerification => Verification is { } category ? UiText.Text(ReportPresentation.VerificationCaption(category)) : "";
 }
@@ -26,9 +31,10 @@ internal sealed record ProjectRow(string Destination, string Source, string Targ
     public ProjectHealthSnapshot? Health { get; init; }
     public AutomaticBackupMode AutomaticMode { get; init; }
     public bool NeedsInitialization { get; init; }
+    public RecoveryDisposition Recovery { get; init; }
     public string DisplayAutomaticMode => IsLocal ? UiText.Text(AutomaticMode switch
     { AutomaticBackupMode.Bidirectional => "双向备份", AutomaticBackupMode.DownloadOnly => "仅下载", _ => "仅上传" }) : "—";
-    public string DisplayResult => UiText.Text(Result);
+    public string DisplayResult => UiText.Text(Recovery == RecoveryDisposition.None ? Result : ReportPresentation.RecoveryCaption(Recovery));
     public string DisplaySource => IsLocal ? Source : "—";
     public string DisplayLocalStatus => UiText.Text(LocalStatus);
     public string DisplayProtection => !IsLocal ? "—" : Health is null ? UiText.Text("状态未知") :
@@ -44,10 +50,19 @@ internal sealed record DesktopState(string Status, bool Busy, bool CanCancel, bo
 {
     public bool OperationBusy { get; init; }
     public bool NetworkOffline { get; init; }
+    public RecoveryDisposition Recovery { get; init; }
 }
 
 internal static class ReportPresentation
 {
+    public static string RecoveryCaption(RecoveryDisposition recovery) => recovery switch
+    {
+        RecoveryDisposition.AutomaticRetry => "等待自动重试",
+        RecoveryDisposition.AwaitingConfirmation => "需要确认版本",
+        RecoveryDisposition.RepairRequired => "需要修复后重试",
+        RecoveryDisposition.Stopped => "已停止",
+        _ => ""
+    };
     public static string FailureCaption(FileFailureKind kind) => kind switch
     {
         FileFailureKind.FileUnavailable => "文件暂不可用", FileFailureKind.Network => "网络暂不可用",
@@ -67,6 +82,12 @@ internal static class ReportPresentation
     {
         var attention = details.Where(d => d.Attention).ToArray();
         return attention.Length > 0 && attention.All(d => d.IsOfflineIssue);
+    }
+    public static bool IsAutomaticRetryOnly(IEnumerable<DetailRow> details)
+    {
+        var attention = details.Where(d => d.Attention && d.FailureKind is not (FileFailureKind.Budget or FileFailureKind.Cancelled) &&
+            d.Recovery != RecoveryDisposition.Stopped).ToArray();
+        return attention.Length > 0 && attention.All(d => d.IsAutomaticRetry);
     }
     public static string Action(FileAction action, SyncDirection? direction = null) => action switch
     {
@@ -98,14 +119,26 @@ internal static class ReportPresentation
             DetailKey: errors.Length == 0 ? description : "{0}\n{1}",
             DetailArguments: errors.Length == 0 ? null : [UiText.Text(description), errors]) { ProjectId = projectId, Verification = file.Verification };
     }
+    private static IEnumerable<DetailRow> RunDetails(ProjectRun project)
+    {
+        var rows = project.Files.Select(f => new DetailRow(project.Destination, f.Path, Action(f.Action, f.Direction),
+            f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention())
+            { ProjectId = project.ProjectId, FailureKind = f.FailureKind, Recovery = CloudRunStatus.Recovery(f) })
+            .Concat(project.Issues.Select(i => new DetailRow(project.Destination, "", i.Code, i.Message, true)
+                { ProjectId = project.ProjectId, FailureKind = i.FailureKind, Recovery = CloudRunStatus.Recovery(i) })).ToArray();
+        foreach (var row in rows) yield return row;
+        var recovery = CloudRunStatus.Recovery(project);
+        if (project.Recovery != RecoveryDisposition.None && !rows.Any(r => r.Attention))
+            yield return new(project.Destination, "", RecoveryCaption(recovery), RecoveryCaption(recovery), true)
+                { ProjectId = project.ProjectId, Recovery = recovery };
+    }
     public static DetailRow[] Details(object report) => report switch
     {
-        BackupReport b => b.Projects.SelectMany(p => p.Files.Select(f => new DetailRow(p.Destination, f.Path, Action(f.Action, f.Direction), f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention()) { ProjectId = p.ProjectId, FailureKind = f.FailureKind })
-            .Concat(p.Issues.Select(i => new DetailRow(p.Destination, "", i.Code, i.Message, true) { ProjectId = p.ProjectId })))
+        BackupReport b => b.Projects.SelectMany(RunDetails)
             .Concat(b.Diagnostics.Select(i => new DetailRow("运行", "", i.Code, i.Message, true, SystemRow: true,
-                DetailKey: "{0}\n{1}", DetailArguments: [UiText.Text("文件传输结果已保留，但运行摘要或历史记录未完整保存。"), i.Message]))).ToArray(),
+                DetailKey: "{0}\n{1}", DetailArguments: [UiText.Text("文件传输结果已保留，但运行摘要或历史记录未完整保存。"), i.Message]) { FailureKind = i.FailureKind, Recovery = CloudRunStatus.Recovery(i) })).ToArray(),
         PreviewReport p => p.Projects.SelectMany(r => r.Plans.Select(f => PreviewRow(r.ProjectId, r.Destination, f, p.PullSelection is not null, p.UploadSelection is not null))
-            .Concat(r.Issues.Select(i => new DetailRow(r.Destination, "", i.Code, i.Message, true) { ProjectId = r.ProjectId }))).ToArray(),
+            .Concat(r.Issues.Select(i => new DetailRow(r.Destination, "", i.Code, i.Message, true) { ProjectId = r.ProjectId, FailureKind = i.FailureKind, Recovery = CloudRunStatus.Recovery(i) }))).ToArray(),
         _ => []
     };
 }

@@ -8,6 +8,8 @@ public enum LocalRetention { KeepLocal, OnlineOnly }
 public sealed record FileResult(string Path, FileAction Action, bool Changed, string? Error = null)
 {
     public FileFailureKind FailureKind { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public RecoveryDisposition Recovery { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public SyncDirection? Direction { get; init; }
     public bool NeedsAttention() => Error is not null || FailureKind is FileFailureKind.Authorization or FileFailureKind.Network ||
@@ -18,6 +20,10 @@ public sealed record ProjectRun(string Destination, IReadOnlyList<FileResult> Fi
 {
     public string ProjectId { get; init; } = "";
     public bool? CoverageComplete { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public RecoveryDisposition Recovery { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? RetryNotBeforeUtc { get; init; }
     public int ExitCode => Issues.Any(i => i.IsFailure) || Files.Any(f => f.FailureKind is FileFailureKind.Authorization or FileFailureKind.Network) ? 1 : Issues.Count != 0 ||
         Files.Any(f => f.NeedsAttention()) ? 2 : 0;
 }

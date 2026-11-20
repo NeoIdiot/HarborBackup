@@ -8,6 +8,15 @@ This file summarizes user-visible changes. Detailed validation records, includin
 - Prepare Windows synthetic-test CI, dependency-update configuration and contribution templates. Hosted CI has not yet been exercised in a public repository.
 - Require future release payloads to include the exact project license.
 
+## 0.9.20 — 2026-11-20
+
+- Cache cloud folder listings and prefetch nearby folders; keep back navigation responsive and provide explicit refresh.
+- Use project IDs for business actions, confirmations and history associations; retain physical mapping checks and verify that renaming existing folders does not retransmit unchanged contents when identities remain trusted.
+- Resume verified original tasks after temporary network failures, with persistent scope, receipts, budgets and provider cooldowns; distinguish automatic waiting, version confirmation, repair and user stop.
+- Preserve independent recovery tasks and genuine manual issues, and reconcile completed transfers before sending content again.
+
+Development evidence: [project identity and folder rename validation](docs/development/validation-project-identity-2026-11-20.md), [network recovery validation](docs/development/validation-network-recovery-2026-11-20.md). Release packaging and installation results are recorded separately after verification.
+
 ## 0.9.19 — 2026-11-19
 
 - Replace the project automatic two-way checkbox with Upload only, Two-way backup and Download only modes; retain common baselines, initialization, conflict protection and automatic budgets when switching modes.

@@ -7,6 +7,7 @@ namespace HarborBackup.Windows.Integration;
 
 public sealed record PendingCloudFile(CloudMapping Mapping, string Path)
 {
+    internal string? JournalId { get; init; }
     internal PreparedPullRestart? Restart { get; init; }
 
     public bool CanRestartPull(ProjectDefinition project, PreviewFile file, SyncDirection direction) =>
@@ -225,7 +226,7 @@ public sealed record CloudMapping(int SchemaVersion, string DeviceId, string? Ac
                                 throw new IOException("Recovery journal location mismatch. Evidence retained.");
                             var restart = journal.Remote?.Project == mapping.Project.ProjectId
                                 ? PreparedPullRestart.Read(path, text, journal) : null;
-                            result.Add(new(mapping, journal.Path) { Restart = restart });
+                            result.Add(new(mapping, journal.Path) { JournalId = journal.Id, Restart = restart });
                         }
                         catch (Exception ex) when (Invalid(ex)) { problems.Add(new(mapping, path, ex.Message)); }
                     }

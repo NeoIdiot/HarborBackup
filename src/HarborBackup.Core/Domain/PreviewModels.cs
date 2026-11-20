@@ -19,7 +19,13 @@ public sealed record HashPolicy(bool UseMetadataCache = true, int FullCheckInter
 public sealed record PreviewSettings(string StateDirectory, string DeviceId, HashPolicy Hash, bool ContinueOnError = true);
 public sealed record PreviewFile(string RelativePath, FileObservation Source, FileObservation Target,
     FileBaseline? Baseline);
-public sealed record PreviewIssue(string Code, string Message, bool IsFailure = true);
+public sealed record PreviewIssue(string Code, string Message, bool IsFailure = true)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public FileFailureKind FailureKind { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public RecoveryDisposition Recovery { get; init; }
+}
 public sealed class ReadMetrics
 {
     public long HashedFiles { get; set; }

@@ -12,7 +12,7 @@ internal sealed class CloudObservationPublisher(ConfigurationSnapshot config, IC
 {
     private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
     private sealed record Acknowledged(int SchemaVersion, string Fingerprint, DateTimeOffset PublishedUtc);
-    public async Task PublishAsync(ProjectDefinition project, IReadOnlyList<FileResult> files, ReadMetrics metrics, CancellationToken token)
+    public async Task PublishAsync(ProjectDefinition project, IReadOnlyList<FileResult> files, ReadMetrics metrics, CancellationToken token, bool drainOnly = false)
     {
         var account = config.CloudAccount!;
         var data = DataPaths.FromState(config.Preview.StateDirectory);
@@ -52,6 +52,7 @@ internal sealed class CloudObservationPublisher(ConfigurationSnapshot config, IC
         if (Directory.Exists(outbox))
             foreach (var path in Directory.EnumerateFiles(outbox, "*.json").OrderBy(File.GetLastWriteTimeUtc))
             { token.ThrowIfCancellationRequested(); SafePath.Validate(path, data.Root); await SendAsync(path); }
+        if (drainOnly) return;
         if (acknowledged is { SchemaVersion: 1 } && acknowledged.Fingerprint == fingerprint &&
             acknowledged.PublishedUtc <= clock.GetUtcNow() && clock.GetUtcNow() - acknowledged.PublishedUtc < TimeSpan.FromHours(1))
         { metrics.CloudObservationSkipped++; return; }

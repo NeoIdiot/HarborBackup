@@ -73,13 +73,13 @@ public static class RunStatusStore
             record["source"] = mapping.Source; record["destination"] = mapping.Destination; record["target"] = mapping.Target;
             record["lastAttemptAt"] = report.StartedAtUtc;
             record["lastCompletedRunAt"] = report.CompletedAtUtc;
-            record["lastResult"] = report.Cancelled ? "Cancelled" : run.ExitCode == 0 ? "Success" :
-                CloudRunStatus.IsOfflineInterruption(run) ? "OfflineInterrupted" : run.ExitCode == 1 ? "Failed" :
-                report.Completion == "BudgetLimited" ? "BudgetLimited" : "Warning";
+            record["lastResult"] = report.Cancelled ? "Cancelled" : report.Completion == "BudgetLimited" ? "BudgetLimited" : CloudRunStatus.Result(run);
+            record["recovery"] = report.Cancelled ? RecoveryDisposition.Stopped.ToString() : CloudRunStatus.Recovery(run).ToString();
+            record["retryNotBeforeUtc"] = run.RetryNotBeforeUtc;
             record["lastError"] = string.Join("; ", run.Issues.Select(i => i.Message).Concat(run.Files.Where(f => f.Error is not null).Select(f => f.Error)));
             record["durationSeconds"] = Math.Round((report.CompletedAtUtc - report.StartedAtUtc).TotalSeconds, 2);
             record["cloudUploadStatus"] = report.CloudUploadStatus;
-            if (run.ExitCode == 1)
+            if (run.ExitCode == 1 && !CloudRunStatus.IsAutomaticRetryOnly(run))
             {
                 record["consecutiveFailures"] = record["consecutiveFailures"]!.GetValue<int>() + 1;
                 record["lastFailureAt"] = report.CompletedAtUtc;

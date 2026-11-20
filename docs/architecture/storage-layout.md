@@ -16,6 +16,7 @@ data/config 分为 projects.json、backup-settings.json、desktop-settings.json�
 
 - state/devices/<设备ID>/baselines.json：共同基线，不包含扫描缓存。
 - last-run.json：最近结果；scheduler.json：暂停状态；transactions：未完成文件事务。
+- 账户直连的 `state/devices/<设备ID>/cloud/<映射摘要>` 还保存网络续行任务：`resume-task.json`、`resume-tasks/<任务ID>`、`active-tasks` 和 `retained-tasks`。原授权、范围、完成回执和预算属于恢复依据，不是可清理缓存；格式与核验规则见[账户传输设计](onedrive-account-transport.md#network-interrupted-task-continuation)。
 - last-run 运行摘要、history/logs 写入失败作为报告级诊断返回，已核验文件传输和共同基线不回滚；摘要失败后仍尝试历史写入。基线、事务、就绪标记和保护材料不属于此降级路径，仍严格核验并保留恢复证据。
 - cache/hashes/<设备ID>/<项目摘要>.json：可重建观察；损坏或不可读时重新哈希，不能清空基线。
 - history：结构化运行报告；logs：日汇总诊断。默认保留 90/30 天，可通过 backup-settings 的 history/logging.retentionDays 调整。
