@@ -14,6 +14,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
         new GraphTransferOptions(UploadBytesPerSecond: config.UploadKiBPerSecond * 1024L, DownloadBytesPerSecond: config.DownloadKiBPerSecond * 1024L));
     public async Task<PreviewReport> PreviewAsync(SyncDirection direction, string? destination, bool full, CancellationToken token, IProgress<BackupProgress>? progress = null, bool prepareUpload = false)
     {
+        destination = BackupRuntime.ResolveProjectId(config, destination);
         using var drive = Open(); var projects = new List<ProjectPreview>();
         var selections = new List<PullFileSelection>();
         var explicitChoice = destination is not null && (direction == SyncDirection.Pull || prepareUpload);
@@ -75,6 +76,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
     {
         if (automatic && (direction != SyncDirection.Backup || recoverOnly || confirmedPull is not null || confirmedUpload is not null))
             throw new ArgumentException("Automatic execution requires an unconfirmed backup.");
+        if (!recoverOnly) destination = BackupRuntime.ResolveProjectId(config, destination);
         if (confirmedPull is not null && (destination is null || direction != SyncDirection.Pull || recoverOnly ||
             BackupRuntime.Select(config, destination).Single().ProjectId != confirmedPull.ProjectId ||
             confirmedPull.Files.Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != confirmedPull.Files.Count))
@@ -89,8 +91,9 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
         var recovery = CloudMapping.ScanPending(config);
         var pendingFiles = recovery.Files;
         var pending = pendingFiles.Select(p => p.Mapping).DistinctBy(m => m.Binding).ToArray();
+        if (recoverOnly) destination = BackupRuntime.ResolveProjectId(config.Projects.Concat(pending.Select(m => m.Project)), destination);
         var selectedProjects = recoverOnly ? config.Projects.Concat(pending.Select(m => m.Project))
-            .Where(p => destination is null || p.ProjectId == destination || p.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase))
+            .Where(p => destination is null || p.ProjectId == destination)
             .DistinctBy(p => CloudMapping.Bind(p, config)).ToArray() : BackupRuntime.Select(config, destination);
         if (destination is not null && selectedProjects.Count == 0) throw new ArgumentException("Unknown destination.");
         var mode = recoverOnly ? "Recover" : automatic ? AutomaticReportMode(selectedProjects) : direction.ToString();
@@ -349,6 +352,7 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
     }
     public async Task<IReadOnlyList<CloudRevision>> RevisionsAsync(string? destination, CancellationToken token)
     {
+        destination = BackupRuntime.ResolveProjectId(config, destination);
         using var drive = Open(); var repository = new CloudRepository(drive, Account, Data);
         await repository.ValidateAsync(token);
         var result = new List<CloudRevision>();

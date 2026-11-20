@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HarborBackup.Core.Domain;
 using HarborBackup.Windows.Integration;
 using HarborBackup.Windows.Persistence;
 using HarborBackup.Windows.Persistence.Configuration;
@@ -15,11 +16,13 @@ internal static class CloudCommands
         {
             if(args[i]=="--json") continue;
             var key=args[i];
-            if(key is not ("--config" or "--system-config" or "--client-id" or "--parent-id" or "--name" or "--destination" or "--path" or "--prefer" or "--expected"))
+            if(key is not ("--config" or "--system-config" or "--client-id" or "--parent-id" or "--name" or "--project-id" or "--destination" or "--path" or "--prefer" or "--expected"))
                 throw new ArgumentException("Unknown account option: "+key);
             if(++i==args.Length || !options.TryAdd(key,args[i]))throw new ArgumentException("Missing or duplicate option.");
         }
         string Required(string name)=>options.GetValueOrDefault(name)??throw new ArgumentException("Required: "+name);
+        if (options.ContainsKey("--project-id") && options.ContainsKey("--destination")) throw new ArgumentException("Choose one project selector.");
+        if (options.TryGetValue("--project-id", out var explicitId) && !FileVersion.IsHash(explicitId)) throw new ArgumentException("Invalid project ID.");
         var paths=ApplicationPaths.Resolve(options.GetValueOrDefault("--config"),options.GetValueOrDefault("--system-config"));
         using var guard=args[0] is "cloud-connect" or "cloud-bind" or "cloud-disconnect" or "cloud-upgrade" ? null : new RunLock();using var cancellation=new CancellationTokenSource();
         Console.CancelKeyPress+=(_,e)=>{e.Cancel=true;cancellation.Cancel();};
@@ -53,9 +56,11 @@ internal static class CloudCommands
             case "cloud-resolve":
                 var config=new BackupRuntime(paths).Load();
                 if(config.CloudAccount is null)throw new ArgumentException("Account mode is not enabled.");
+                var selector = options.GetValueOrDefault("--project-id") ?? Required("--destination");
+                var projectId = BackupRuntime.ResolveProjectId(config, selector)!;
                 using(var client=store.Open())
                 {
-                    var inspection=CloudConflictResolution.InspectAsync(config,Required("--destination"),Required("--path"),client,token).GetAwaiter().GetResult();
+                    var inspection=CloudConflictResolution.InspectAsync(config,projectId,Required("--path"),client,token).GetAwaiter().GetResult();
                     if(args[0]=="cloud-resolve")
                     {
                         if(Required("--expected")!=inspection.Confirmation)throw new IOException("Versions changed. Inspect again.");

@@ -39,6 +39,6 @@ internal static class ProjectHealthPresentation
                 health.Binding, true, SystemRow: true,
                 DetailKey: pending ? "已知积压至少 {0} 项，首次记录于 {1}。请核对项目和运行详情；未观察到的文件不计入数量。"
                     : "此映射最近一次完整成功为 {0}。请运行备份或查看暂停、网络与预算设置。",
-                DetailArguments: pending ? [health.KnownBacklogCount, Time(health.OldestPendingUtc)] : [Time(health.LastFullSuccessUtc)]);
+                DetailArguments: pending ? [health.KnownBacklogCount, Time(health.OldestPendingUtc)] : [Time(health.LastFullSuccessUtc)]) { ProjectId = p.ProjectId };
         }).ToArray();
 }

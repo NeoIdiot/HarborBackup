@@ -73,7 +73,7 @@ public sealed class ProjectHealthUiTests
                     var version = new FileVersion(new string('a', 64), 12345, stamp, stamp);
                     var device = new string('d', 64);
                     using var dialog = new CloudConflictDialog(new("Demo", "a.txt", version,
-                        [new(1, "revision", "Demo", "a.txt", device, [], "item", "etag", version, stamp)], "confirmation"));
+                        [new(1, "revision", new string('a', 64), "a.txt", device, [], "item", "etag", version, stamp)], "confirmation") { ProjectId = new string('a', 64) });
                     dialog.Show(host);
                     var list = (ListBox)dialog.Controls.Find("ConflictVersions", true).Single();
                     Assert.AreEqual(2, list.Items.Count); list.SelectedIndex = 1;

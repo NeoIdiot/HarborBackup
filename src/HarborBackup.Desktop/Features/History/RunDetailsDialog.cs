@@ -1,4 +1,5 @@
 using HarborBackup.Desktop.Localization;
+using HarborBackup.Core.Domain;
 using HarborBackup.Desktop.Presentation;
 using HarborBackup.Desktop.Styling;
 using HarborBackup.Windows.Persistence;
@@ -7,16 +8,17 @@ namespace HarborBackup.Desktop.Views.Dialogs;
 
 internal sealed class RunDetailsDialog : Form
 {
+    private sealed record ProjectChoice(string Id, string Name);
     public RunDetailsDialog(HistoryRecord record, string? projectFilter = null) : this(record.Report is null
         ? [new("日志", "", "读取错误", record.Error ?? "", true, SystemRow: true)]
         : ReportPresentation.Details(record.Report), "运行详情",
         $"{record.Time.ToLocalTime():yyyy-MM-dd HH:mm:ss} · {UiText.Text(ReportPresentation.Mode(record.Mode))} · {UiText.Text(ReportPresentation.Result(record.ExitCode))}" +
         (record.Report is null ? "" : Environment.NewLine + UiText.Text("共 {0} 个项目，完成写入 {1} 项，待处理 {2} 项", record.Projects.Count,
             record.Report.Projects.Sum(p => p.Files.Count(f => f.Changed)), ReportPresentation.Details(record.Report).Count(r => r.Attention))),
-        record.Path, projectFilter, record.Projects) { }
+        record.Path, projectFilter, record.Report?.Projects) { }
 
     public RunDetailsDialog(IReadOnlyList<DetailRow> rows, string title = "条目详情", string? summary = null,
-        string? logPath = null, string? projectFilter = null, IReadOnlyList<string>? projectNames = null)
+        string? logPath = null, string? projectFilter = null, IReadOnlyList<ProjectRun>? projectRuns = null)
     {
         Name = "RunDetailsDialog";
         AppStyle.Configure(this, title, new Size(960, 640));
@@ -26,12 +28,17 @@ internal sealed class RunDetailsDialog : Form
             ("DisplayAction", "动作", 15), ("DisplayDetails", "详情", 35));
         grid.Name = "RunDetailsGrid";
         var search = new TextBox { Name = "RunDetailsFilter", Width = 320, PlaceholderText = UiText.Text("筛选项目、路径、动作或错误…") };
-        var projects = (projectNames ?? rows.Where(r => !r.SystemRow).Select(r => r.Project).ToArray()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var choices = (projectRuns?.Select(p => new ProjectChoice(p.ProjectId, p.Destination)) ??
+            rows.Where(r => !r.SystemRow).Select(r => new ProjectChoice(r.ProjectId, r.Project)))
+            .DistinctBy(p => p.Id.Length > 0 ? p.Id : "\0" + p.Name, StringComparer.Ordinal).ToArray();
+        var projects = choices.Select(p => choices.Count(other => other.Name == p.Name) > 1 && p.Id.Length > 0
+            ? p.Name + " [" + p.Id[..Math.Min(8, p.Id.Length)] + "]" : p.Name).ToArray();
         var project = new ComboBox { Name = "RunDetailsProject", Width = 240, DropDownStyle = ComboBoxStyle.DropDownList, Visible = projects.Length > 1 };
         project.Items.Add(UiText.Text("全部项目（{0}）", projects.Length));
         project.Items.AddRange(projects);
-        var matches = projects.Select((name, index) => (name, index)).Where(p => !string.IsNullOrEmpty(projectFilter) &&
-            p.name.Contains(projectFilter, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var filterById = FileVersion.IsHash(projectFilter ?? "");
+        var matches = choices.Select((choice, index) => (choice, index)).Where(p => !string.IsNullOrEmpty(projectFilter) &&
+            (filterById ? p.choice.Id == projectFilter : p.choice.Name.Contains(projectFilter, StringComparison.OrdinalIgnoreCase))).ToArray();
         project.SelectedIndex = matches.Length == 1 ? matches[0].index + 1 : 0;
         var attention = UiText.Bind(new CheckBox { Name = "RunDetailsAttention", AutoSize = true, Padding = new Padding(0, 7, 0, 0) }, "仅看待处理");
         var count = new Label { AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(0, 6, 0, 6) };
@@ -60,8 +67,10 @@ internal sealed class RunDetailsDialog : Form
         void Filter()
         {
             var query = search.Text.Trim();
-            var selectedProject = project.SelectedIndex > 0 ? projects[project.SelectedIndex - 1] : null;
-            var filtered = rows.Where(r => (selectedProject is null || r.Project.Equals(selectedProject, StringComparison.OrdinalIgnoreCase)) &&
+            var selectedProject = project.SelectedIndex > 0 ? choices[project.SelectedIndex - 1] : null;
+            // Reports without IDs remain readable, but their labels never resolve an actionable project.
+            var filtered = rows.Where(r => (selectedProject is null || (selectedProject.Id.Length > 0
+                    ? r.ProjectId == selectedProject.Id : r.ProjectId.Length == 0 && r.Project.Equals(selectedProject.Name, StringComparison.OrdinalIgnoreCase))) &&
                 (!attention.Checked || r.Attention) &&
                 (r.DisplayProject + r.Path + r.DisplayAction + r.DisplayDetails).Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
             grid.DataSource = filtered;

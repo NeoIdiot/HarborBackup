@@ -21,7 +21,7 @@ internal sealed class ProblemNotificationPolicy
         {
             if (!row.Attention || row.IsOfflineIssue || row.FailureKind is FileFailureKind.Budget or FileFailureKind.Cancelled ||
                 row.Action is "AutomaticTimeBudgetReached" or "AutomaticTransferBudgetReached") continue;
-            signature.Add(row.Project);
+            signature.Add(row.ProjectId.Length > 0 ? row.ProjectId : row.Project);
             signature.Add(row.Path);
             signature.Add(row.Action);
             signature.Add(row.Details);

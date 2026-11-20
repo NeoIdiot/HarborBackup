@@ -9,6 +9,8 @@ namespace HarborBackup.Desktop.Presentation;
 internal sealed record DetailRow(string Project, string Path, string Action, string Details, bool Attention,
     bool SystemRow = false, string? DetailKey = null, object?[]? DetailArguments = null)
 {
+    public string ProjectId { get; init; } = "";
+    internal string? ActionProjectId => !SystemRow && FileVersion.IsHash(ProjectId) ? ProjectId : null;
     public string DisplayProject => SystemRow ? UiText.Text(Project) : Project;
     public string DisplayAction => UiText.Text(Action);
     public string DisplayDetails => (FailureKind == FileFailureKind.None ? "" : UiText.Text(ReportPresentation.FailureCaption(FailureKind)) + Environment.NewLine) +
@@ -83,7 +85,7 @@ internal static class ReportPresentation
         "Backup" => "备份", "Pull" => "取回", "Recover" => "事务恢复", "AutomaticBidirectional" => "自动双向备份",
         "AutomaticUpload" => "自动上传备份", "AutomaticDownload" => "自动下载备份", "AutomaticMixed" => "自动混合备份", _ => mode
     };
-    private static DetailRow PreviewRow(string project, PreviewPlan file, bool pull, bool upload)
+    private static DetailRow PreviewRow(string projectId, string project, PreviewPlan file, bool pull, bool upload)
     {
         var decision = file.Decision;
         var description = decision.Reason == "RetryInterruptedPull" ? decision.Reason : decision.Action == FileAction.Copy && pull
@@ -94,16 +96,16 @@ internal static class ReportPresentation
         var errors = string.Join(Environment.NewLine, new[] { file.SourceError, file.TargetError }.Where(e => !string.IsNullOrEmpty(e)));
         return new(project, file.Path, Action(decision.Action), description, decision.NeedsAttention,
             DetailKey: errors.Length == 0 ? description : "{0}\n{1}",
-            DetailArguments: errors.Length == 0 ? null : [UiText.Text(description), errors]) { Verification = file.Verification };
+            DetailArguments: errors.Length == 0 ? null : [UiText.Text(description), errors]) { ProjectId = projectId, Verification = file.Verification };
     }
     public static DetailRow[] Details(object report) => report switch
     {
-        BackupReport b => b.Projects.SelectMany(p => p.Files.Select(f => new DetailRow(p.Destination, f.Path, Action(f.Action, f.Direction), f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention()) { FailureKind = f.FailureKind })
-            .Concat(p.Issues.Select(i => new DetailRow(p.Destination, "", i.Code, i.Message, true))))
+        BackupReport b => b.Projects.SelectMany(p => p.Files.Select(f => new DetailRow(p.Destination, f.Path, Action(f.Action, f.Direction), f.Error ?? (f.Changed ? "已完成写入并校验" : "未改写业务文件"), f.NeedsAttention()) { ProjectId = p.ProjectId, FailureKind = f.FailureKind })
+            .Concat(p.Issues.Select(i => new DetailRow(p.Destination, "", i.Code, i.Message, true) { ProjectId = p.ProjectId })))
             .Concat(b.Diagnostics.Select(i => new DetailRow("运行", "", i.Code, i.Message, true, SystemRow: true,
                 DetailKey: "{0}\n{1}", DetailArguments: [UiText.Text("文件传输结果已保留，但运行摘要或历史记录未完整保存。"), i.Message]))).ToArray(),
-        PreviewReport p => p.Projects.SelectMany(r => r.Plans.Select(f => PreviewRow(r.Destination, f, p.PullSelection is not null, p.UploadSelection is not null))
-            .Concat(r.Issues.Select(i => new DetailRow(r.Destination, "", i.Code, i.Message, true)))).ToArray(),
+        PreviewReport p => p.Projects.SelectMany(r => r.Plans.Select(f => PreviewRow(r.ProjectId, r.Destination, f, p.PullSelection is not null, p.UploadSelection is not null))
+            .Concat(r.Issues.Select(i => new DetailRow(r.Destination, "", i.Code, i.Message, true) { ProjectId = r.ProjectId }))).ToArray(),
         _ => []
     };
 }

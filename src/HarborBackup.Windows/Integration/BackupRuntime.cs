@@ -38,14 +38,32 @@ public sealed class BackupRuntime(RuntimePaths paths)
         return new CloudBackupRuntime(config).ExecuteAsync(direction, destination, fullCheck, recoverOnly, structuredProgress, deadline.Token, confirmedPull, automatic, confirmedUpload).GetAwaiter().GetResult();
     }
 
-    public static IReadOnlyList<ProjectDefinition> Select(ConfigurationSnapshot config, string? destination)
+    public static IReadOnlyList<ProjectDefinition> Select(ConfigurationSnapshot config, string? projectId)
     {
-        if (destination is null) return config.Projects;
-        var selected = config.Projects.Where(p => p.ProjectId == destination).ToArray();
-        // Destination is a human-facing selector for CLI calls, never a storage identity.
-        if (selected.Length == 0) selected = config.Projects.Where(p => p.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase)).ToArray();
-        if (selected.Length == 0) throw new ArgumentException("Unknown destination.");
+        if (projectId is null) return config.Projects;
+        if (!FileVersion.IsHash(projectId)) throw new ArgumentException("Invalid project ID.");
+        var selected = config.Projects.Where(p => p.ProjectId == projectId).ToArray();
+        if (selected.Length != 1) throw new ArgumentException("Unknown or ambiguous project ID.");
         return selected;
+    }
+
+    // Human-readable selectors are resolved once at an application entry point. Every
+    // subsequent project lookup, confirmation and business association uses the returned ID.
+    public static string? ResolveProjectId(ConfigurationSnapshot config, string? selector) =>
+        ResolveProjectId(config.Projects, selector);
+
+    internal static string? ResolveProjectId(IEnumerable<ProjectDefinition> projects, string? selector)
+    {
+        if (selector is null) return null;
+        var available = projects.ToArray();
+        var identified = available.Where(p => p.ProjectId == selector).Select(p => p.ProjectId).Distinct().ToArray();
+        if (identified.Length == 1) return identified[0];
+        // An unknown ID must never accidentally select a folder whose name is that ID.
+        if (FileVersion.IsHash(selector)) throw new ArgumentException("Unknown project ID.");
+        var aliases = available.Where(p => p.Destination.Equals(selector, StringComparison.OrdinalIgnoreCase))
+            .Select(p => p.ProjectId).Distinct().ToArray();
+        if (aliases.Length != 1) throw new ArgumentException("Unknown or ambiguous project selector.");
+        return aliases[0];
     }
 
     public RestoreCatalog ListRestore(string? destination = null, RestoreScope? scope = null, string? path = null, CancellationToken token = default)

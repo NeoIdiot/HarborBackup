@@ -385,7 +385,8 @@ internal sealed partial class MainForm : Form
         var text = historyFilter.Text.Trim();
         historyGrid.DataSource = (previousHistory ?? []).Where(r => (selectedCode == -1 || r.ExitCode == selectedCode) &&
             (!historySince.Checked || r.Time.ToLocalTime().Date >= historySince.Value.Date) &&
-            (text.Length == 0 || r.Report?.Projects.Any(p => p.Destination.Contains(text, StringComparison.OrdinalIgnoreCase)) == true)).ToArray();
+            (text.Length == 0 || r.Report?.Projects.Any(p => p.ProjectId.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                p.Destination.Contains(text, StringComparison.OrdinalIgnoreCase)) == true)).ToArray();
     }
     private void RefreshLanguage()
     {

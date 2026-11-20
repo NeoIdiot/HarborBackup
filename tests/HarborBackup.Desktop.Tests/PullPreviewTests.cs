@@ -23,10 +23,11 @@ public sealed class PullPreviewTests
                 var retry = new FileDecision(FileAction.Copy, false, FileSide.Source, FileSide.None, ProtectionKind.None, "RetryInterruptedPull");
                 var ordinary = retry with { Reason = "TargetOnly" };
                 var blocked = new FileDecision(FileAction.Deferred, false, FileSide.None, FileSide.None, ProtectionKind.None, "PendingFileOperation");
+                var projectId = new string('a', 64);
                 var report = new PreviewReport([new("Demo", [new("retry.docx", retry, false, false),
                     new("new.docx", ordinary, false, false), new("blocked.docx", blocked, false, false)],
-                    [new("PendingOperationsRetained", "未完成操作涉及的文件暂不可写入；其他文件仍可选择，旧恢复材料会保留。", false)], new())])
-                { PullSelection = new("Demo", true, [new("retry.docx", "retry", true, 10), new("new.docx", "new", true, 20)]) };
+                    [new("PendingOperationsRetained", "未完成操作涉及的文件暂不可写入；其他文件仍可选择，旧恢复材料会保留。", false)], new()) { ProjectId = projectId }])
+                { PullSelection = new("Demo", true, [new("retry.docx", "retry", true, 10), new("new.docx", "new", true, 20)]) { ProjectId = projectId } };
                 using var dialog = new PreviewDialog(report, true, @"C:\Example", "OneDrive/Demo");
                 dialog.Show();
                 var grid = (DataGridView)dialog.Controls.Find("PullPreviewGrid", true).Single();

@@ -11,7 +11,7 @@ internal sealed record TrayPresentation(TrayBadge Badge, string ToolTip)
     {
         var attention = state.Details.Where(d => d.Attention).ToArray();
         var files = attention.Where(d => !d.SystemRow && d.Path.Length > 0)
-            .Select(d => d.Project + "\0" + d.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            .Select(d => (d.ProjectId.Length > 0 ? d.ProjectId : d.Project) + "\0" + d.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count();
         var connection = state.NeedsSetup || !account.Enabled || account.RequiresAuthorization;
         var network = state.NetworkOffline && !connection;
         // Current blocking errors win; saved per-project results do not cover a running operation.

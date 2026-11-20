@@ -365,10 +365,10 @@ internal sealed class ProjectEditorDialog : Form
             }
             if (preview)
             {
-                var name = global ? null : snapshot.Projects[index ?? (snapshot.Projects.Count - 1)].Destination;
+                var projectId = global ? null : snapshot.Projects[index ?? (snapshot.Projects.Count - 1)].ProjectId;
                 previewCancellation!.Token.ThrowIfCancellationRequested();
                 UpdatePreviewFeedback();
-                var report = await presenter.PreviewAsync(candidate, name, previewCancellation.Token, progress);
+                var report = await presenter.PreviewAsync(candidate, projectId, previewCancellation.Token, progress);
                 previewCancellation.Token.ThrowIfCancellationRequested();
                 progressTimer.Stop(); elapsed.Stop(); activity.Visible = false;
                 UiText.Set(feedback, "预览已完成，草稿尚未保存。");

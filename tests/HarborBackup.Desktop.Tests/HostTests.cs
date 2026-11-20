@@ -639,7 +639,7 @@ public sealed class HostTests
                         var conflictVersion = new FileVersion(new string('a',64),100,DateTimeOffset.UtcNow,DateTimeOffset.UtcNow);
                         using (var conflictDialog = new CloudConflictDialog(new("Projects/Demo","docs/example.txt",conflictVersion,
                             [new(1,Guid.NewGuid().ToString("N"),new string('b',64),"docs/example.txt",new string('c',64),[],
-                                "item","etag",conflictVersion,DateTimeOffset.UtcNow)],"confirmation")))
+                                "item","etag",conflictVersion,DateTimeOffset.UtcNow)],"confirmation") { ProjectId = DeviceIdentity.Digest("demo") }))
                         {
                             conflictDialog.Show(form); Capture(conflictDialog, (english ? "en" : "zh") + "-conflict"); conflictDialog.Close();
                         }
@@ -648,8 +648,8 @@ public sealed class HostTests
                         var safe = new FileDecision(FileAction.Copy, false, FileSide.Source, FileSide.None, ProtectionKind.None, "TargetOnly");
                         var deferred = new FileDecision(FileAction.Deferred, true, FileSide.None, FileSide.None, ProtectionKind.None, "CloudMetadataRequired");
                         var pullReport = new PreviewReport([new("Projects/Demo",
-                            [new("first.txt",safe,true,false),new("second.txt",safe,true,false),new("unknown.txt",deferred,true,false)],[],new())])
-                        { PullSelection = new("Projects/Demo",false,[new("first.txt","first-token",true,100),new("second.txt","second-token",true,200)]) };
+                            [new("first.txt",safe,true,false),new("second.txt",safe,true,false),new("unknown.txt",deferred,true,false)],[],new()) { ProjectId = DeviceIdentity.Digest("demo") }])
+                        { PullSelection = new("Projects/Demo",false,[new("first.txt","first-token",true,100),new("second.txt","second-token",true,200)]) { ProjectId = DeviceIdentity.Digest("demo") } };
                         using (var preview = new PreviewDialog(pullReport,true,ws.Source,"OneDrive/Projects/Demo"))
                         {
                             preview.Show(form);

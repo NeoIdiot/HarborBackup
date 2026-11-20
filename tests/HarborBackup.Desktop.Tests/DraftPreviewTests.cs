@@ -145,7 +145,7 @@ public sealed class DraftPreviewTests
             {
                 UiText.SetLanguage(language);
                 var copy = new FileDecision(FileAction.Copy, true, FileSide.Target, FileSide.Target, ProtectionKind.Archive, "ExplicitLocalUpload");
-                var report = new PreviewReport([new("Demo", [new("a.txt", copy, true, false), new("b.txt", copy, true, false)], [], new())])
+                var report = new PreviewReport([new("Demo", [new("a.txt", copy, true, false), new("b.txt", copy, true, false)], [], new()) { ProjectId = DeviceIdentity.Digest("demo") }])
                 { UploadSelection = new("Demo", true, [new("a.txt", "a", false, 1), new("b.txt", "b", false, 1)]) { ProjectId = DeviceIdentity.Digest("demo") } };
                 using var dialog = new PreviewDialog(report, source: @"C:\Example", target: "OneDrive/Demo", allowUpload: true);
                 dialog.Show();
@@ -346,8 +346,8 @@ public sealed class DraftPreviewTests
             {
                 var decision = new FileDecision(FileAction.Copy,false,FileSide.Source,FileSide.None,ProtectionKind.None,"TargetOnly");
                 var plans = Enumerable.Range(0,20000).Select(i => new PreviewPlan(i+".txt",decision,true,false)).ToArray();
-                var report = new PreviewReport([new("Projects/Demo",plans,[],new())])
-                { PullSelection = pull ? new("Projects/Demo",false,plans.Select(p => new PullFileSelection(p.Path,p.Path,true,1)).ToArray()) : null };
+                var report = new PreviewReport([new("Projects/Demo",plans,[],new()) { ProjectId = DeviceIdentity.Digest("demo") }])
+                { PullSelection = pull ? new("Projects/Demo",false,plans.Select(p => new PullFileSelection(p.Path,p.Path,true,1)).ToArray()) { ProjectId = DeviceIdentity.Digest("demo") } : null };
                 var watch = Stopwatch.StartNew();
                 using var preview = new PreviewDialog(report,pull,"C:\\Example","OneDrive/Projects/Demo");
                 preview.Show();

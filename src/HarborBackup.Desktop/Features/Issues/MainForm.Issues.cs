@@ -57,13 +57,13 @@ internal sealed partial class MainForm
     }
     private async Task ResolveSelectedConflictAsync()
     {
-        if (detailGrid.CurrentRow?.DataBoundItem is not DetailRow { SystemRow: false } row || string.IsNullOrEmpty(row.Path)) return;
+        if (detailGrid.CurrentRow?.DataBoundItem is not DetailRow row || row.ActionProjectId is not { } projectId || string.IsNullOrEmpty(row.Path)) return;
         try
         {
                 var expected = await controller.ExclusiveAsync(() =>
                 {
                     using var drive = new CloudAccountStore(controller.Paths.Data).Open();
-                    return CloudConflictResolution.InspectAsync(new BackupRuntime(controller.Paths).Load(), row.Project, row.Path, drive, default).GetAwaiter().GetResult();
+                    return CloudConflictResolution.InspectAsync(new BackupRuntime(controller.Paths).Load(), projectId, row.Path, drive, default).GetAwaiter().GetResult();
                 });
                 using var choice = new CloudConflictDialog(expected, (selected, outputRoot, token) => controller.ExclusiveAsync(cancellation =>
                 {
@@ -78,7 +78,7 @@ internal sealed partial class MainForm
                     CloudConflictResolution.ResolveAsync(new BackupRuntime(controller.Paths).Load(), expected, choice.Selected!, drive, default).GetAwaiter().GetResult();
                     return true;
                 });
-                await controller.RunAsync(DesktopCommand.Preview, row.Project);
+                await controller.RunAsync(DesktopCommand.Preview, projectId);
                 ShowDetails();
         }
         catch (Exception ex) { ShowError(CloudAccountPresentation.Error(ex)); }

@@ -60,6 +60,7 @@ public sealed class CloudRestoreService(ConfigurationSnapshot config, Func<IClou
 
     public async Task<RestoreCatalog> ListAsync(string? destination, RestoreScope? scope, string? pathFilter, CancellationToken token)
     {
+        destination = BackupRuntime.ResolveProjectId(config, destination);
         if (pathFilter is not null) pathFilter = PathRules.Relative(pathFilter, true);
         using var drive = Open(); var repository = new CloudRepository(drive, Account, Data);
         await repository.ValidateAsync(token);
@@ -125,7 +126,7 @@ public sealed class CloudRestoreService(ConfigurationSnapshot config, Func<IClou
                             if (record.Kind != ProtectionKind.Archive || record.Revision.Project != project.ProjectId ||
                                 DeviceIdentity.Digest(record.Revision.Path.ToUpperInvariant()) != pathFolder.Name || item.Name != record.Revision.Id + ".json")
                                 throw new IOException("Archive restore index identity mismatch.");
-                            if (!record.Destination.Equals(project.Destination, StringComparison.OrdinalIgnoreCase) || !Filter(record.Revision.Path, pathFilter)) continue;
+                            if (!Filter(record.Revision.Path, pathFilter)) continue;
                             var relativeParent = record.Revision.Path.Contains('/') ? record.Revision.Path[..record.Revision.Path.LastIndexOf('/')] : "";
                             var contentParent = await repository.FolderAsync("archives/" + record.Destination + (relativeParent.Length == 0 ? "" : "/" + relativeParent), false, token);
                             if (contentParent is null || record.Item.ParentId != contentParent.Id || record.Item.Name != Path.GetFileName(record.Revision.Path))

@@ -14,6 +14,8 @@ A new project receives one fixed 64-character hexadecimal ID. The editor display
 
 Editing a project's source or destination retains its identity and suppresses its previous mapping in this device's list. Cloud catalog refresh resolves current folder names and groups location revisions by project ID. Changing a destination does not move existing files; subsequent uploads and pulls use the new configuration.
 
+Preview selections, issue actions, conflict confirmations and version history use the project ID. Display paths describe the current location. After a rename, archives stored under that project's previous location remain available for listing and export, with the original archive location validated before reading. Older reports without a verifiable project ID remain read-only.
+
 More actions > Remove project works for both local and cloud-only entries. It updates this device's configuration only, retaining all local files, cloud files, history, conflicts, and recovery materials. Other devices are unaffected. Removed entries stay removed after refresh or restart. To add one again, choose its folder through Add project > Browse cloud.
 
 Connect your personal OneDrive account under Settings > Account and management folder. Select a HarborBackup management folder for metadata, archives and conflicts.
@@ -122,6 +124,6 @@ The Project column lists the projects involved in a run, including the count and
 
 The installer contains a public application Client ID and the SDK-selected self-contained WinForms runtime (untrimmed, shared by Desktop and CLI in app; settings and state stay in data). Optional custom public IDs belong in Advanced settings; never enter a client secret. Credentials stay encrypted for the current Windows user and are not synchronized.
 
-CLI supports cloud-connect, cloud-bind, preview, backup, pull --destination <path>, recover, verify and devices. devices reads shared file metadata; verify hashes local files only. cloud-inspect / cloud-resolve support explicit conflict selection.
+CLI supports cloud-connect, cloud-bind, preview, backup, pull, recover, verify and devices. devices reads shared file metadata; verify hashes local files only. cloud-inspect / cloud-resolve support explicit conflict selection. Prefer `--project-id <id>` when selecting a project, including pull, cloud-inspect and cloud-resolve. `--destination <current relative path>` remains an entry-point convenience that resolves to a project ID before execution. The two options are mutually exclusive; an unknown project ID cannot fall back to an identically named folder.
 
 Real-service isolated-folder tests have passed. Physical two-device and production-upgrade acceptance should still start with a small project.

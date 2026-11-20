@@ -6,13 +6,18 @@ using HarborBackup.Windows.Persistence.Configuration;
 namespace HarborBackup.Windows.Integration;
 
 public sealed record CloudConflictInspection(string Destination, string Path, FileVersion? Local,
-    IReadOnlyList<CloudRevision> Versions, string Confirmation);
+    IReadOnlyList<CloudRevision> Versions, string Confirmation)
+{
+    public string ProjectId { get; init; } = "";
+}
 
 public static class CloudConflictResolution
 {
     public static async Task<CloudConflictInspection> InspectAsync(ConfigurationSnapshot config, string destination, string path,
         ICloudDrive drive, CancellationToken token)
     {
+        destination = BackupRuntime.ResolveProjectId(config, destination)
+            ?? throw new ArgumentException("Conflict inspection requires an explicit project.");
         var project = BackupRuntime.Select(config, destination).Single();
         var recovery = CloudMapping.ScanPending(config);
         if (recovery.Problems.FirstOrDefault(p => p.Affects(project, path)) is { } problem)
@@ -28,14 +33,20 @@ public static class CloudConflictResolution
         var confirmation = DeviceIdentity.Digest(CloudMapping.Bind(project, config) + "/" + config.CloudAccount!.AccountId + "/" + config.CloudAccount.RepositoryId + "/" + config.CloudAccount.RootId + "/" +
             project.Source + "/" + project.Fingerprint + "/" + file.RelativePath + "/" + file.Source.Version?.Sha256 + "/" +
             string.Join("/", heads.Select(h => h.Id + ":" + h.ETag).Order()));
-        return new(destination, file.RelativePath, file.Source.Version, heads, confirmation);
+        return new(project.Destination, file.RelativePath, file.Source.Version, heads, confirmation) { ProjectId = project.ProjectId };
+    }
+    internal static ProjectDefinition InspectionProject(ConfigurationSnapshot config, CloudConflictInspection expected)
+    {
+        if (!FileVersion.IsHash(expected.ProjectId)) throw new IOException("Conflict project identity is invalid. Inspect again.");
+        return config.Projects.SingleOrDefault(p => p.ProjectId == expected.ProjectId)
+            ?? throw new IOException("Conflict project is no longer configured. Inspect again.");
     }
     public static async Task ResolveAsync(ConfigurationSnapshot config, CloudConflictInspection expected, string choice,
         ICloudDrive drive, CancellationToken token)
     {
-        var actual = await InspectAsync(config, expected.Destination, expected.Path, drive, token);
+        var project = InspectionProject(config, expected);
+        var actual = await InspectAsync(config, project.ProjectId, expected.Path, drive, token);
         if (actual.Confirmation != expected.Confirmation) throw new IOException("Versions changed after confirmation. Inspect again.");
-        var project = BackupRuntime.Select(config, expected.Destination).Single();
         var session = new CloudBackupSession(project, config, config.CloudAccount!, drive);
         var repository = new CloudRepository(drive, config.CloudAccount!, DataPaths.FromState(config.Preview.StateDirectory));
         await session.ReadAsync(false, token);
