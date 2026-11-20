@@ -23,6 +23,9 @@ internal sealed class PreviewDialog : Form
         grid.Name = "PullPreviewGrid";
         var rows = ReportPresentation.Details(report);
         var candidates = selection?.Files.ToDictionary(f => f.Path, StringComparer.OrdinalIgnoreCase) ?? [];
+        bool Eligible(DetailRow row) => row.ActionProjectId is { } projectId && projectId == selection?.ProjectId && candidates.ContainsKey(row.Path);
+        var emptyProject = selection is not null && FileVersion.IsHash(selection.ProjectId) && report.Projects.Count == 1 &&
+            report.Projects[0].ProjectId == selection.ProjectId && report.Projects[0].Plans.Count == 0 && report.ExitCode == 0;
         var summary = new Label { AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(0, 0, 0, 12) };
         if (allowUpload) UiText.Set(summary, "读取本地：{0}\n写入云端：{1}\n勾选差异项表示使用本地版本；覆盖前保护云端旧内容，文件变化时跳过。", source, target);
         else if (allowPull) UiText.Set(summary, "读取目标：{0}\n写入本地源：{1}\n仅执行勾选项；文件变化时跳过，覆盖前保护旧内容。", target, source);
@@ -39,7 +42,7 @@ internal sealed class PreviewDialog : Form
         {
             grid.EndEdit();
             var files = Chosen();
-            if (selection is not null && (files.Length > 0 || report.Projects.All(p => p.Plans.Count == 0) && report.ExitCode == 0))
+            if (selection is not null && (files.Length > 0 || emptyProject))
             {
                 if (allowUpload) SelectedUpload = selection with { Files = files };
                 else SelectedPull = selection with { Files = files };
@@ -48,18 +51,18 @@ internal sealed class PreviewDialog : Form
         }, true);
         pull.Name = "ExecuteSelectedPull";
         PullFileSelection[] Chosen() => grid.Rows.Cast<DataGridViewRow>()
-            .Where(r => r.DataBoundItem is DetailRow d && candidates.ContainsKey(d.Path) && r.Cells["Selected"].Value is true)
+            .Where(r => r.DataBoundItem is DetailRow d && Eligible(d) && r.Cells["Selected"].Value is true)
             .Select(r => candidates[((DetailRow)r.DataBoundItem!).Path]).ToArray();
         void UpdateCounts()
         {
             var chosen = selection is null ? [] : Chosen();
-            pull.Enabled = selection is not null && report.ExitCode != 1 && (chosen.Length > 0 || report.Projects.All(p => p.Plans.Count == 0) && report.ExitCode == 0);
+            pull.Enabled = selection is not null && report.ExitCode != 1 && (chosen.Length > 0 || emptyProject);
             UiText.Set(counts, "已选 {0} 项 · 新增 {1} · 更新 {2} · 传输约 {3:F2} MiB · 待处理 {4}",
                 chosen.Length, chosen.Count(f => f.IsNew), chosen.Count(f => !f.IsNew),
                 chosen.Sum(f => (double)f.Bytes) / 1048576d, report.Projects.Sum(p =>
                     p.Issues.Count(i => i.Code is not ("PendingOperationsRetained" or "PendingOperationsUnverified") ||
                         !p.Plans.Any(f => f.Decision.Reason == "PendingFileOperation")) +
-                    p.Plans.Count(f => f.Decision.NeedsAttention && !candidates.ContainsKey(f.Path))));
+                    p.Plans.Count(f => f.Decision.NeedsAttention && !(p.ProjectId == selection?.ProjectId && candidates.ContainsKey(f.Path)))));
         }
         if (selection is not null)
         {
@@ -79,7 +82,7 @@ internal sealed class PreviewDialog : Form
                 {
                     foreach (DataGridViewRow row in grid.Rows)
                     {
-                        var eligible = row.DataBoundItem is DetailRow d && candidates.ContainsKey(d.Path);
+                        var eligible = row.DataBoundItem is DetailRow d && Eligible(d);
                         row.Cells["Selected"].ReadOnly = !eligible;
                         row.Cells["Selected"].Value = eligible;
                     }

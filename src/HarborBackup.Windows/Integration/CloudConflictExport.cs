@@ -14,9 +14,9 @@ public static class CloudConflictExport
         string choice, ICloudDrive drive, string outputRoot, CancellationToken token)
     {
         CloudRestoreService.ValidateOutputRoot(config, outputRoot);
-        var actual = await CloudConflictResolution.InspectAsync(config, expected.Destination, expected.Path, drive, token);
+        var project = CloudConflictResolution.InspectionProject(config, expected);
+        var actual = await CloudConflictResolution.InspectAsync(config, project.ProjectId, expected.Path, drive, token);
         if (actual.Confirmation != expected.Confirmation) throw new IOException("Versions changed after confirmation. Inspect again.");
-        var project = BackupRuntime.Select(config, expected.Destination).Single();
         var relative = PathRules.Relative(actual.Path);
         CloudRevision? selected = null;
         if (choice != "local") selected = actual.Versions.SingleOrDefault(v => v.Id == choice)

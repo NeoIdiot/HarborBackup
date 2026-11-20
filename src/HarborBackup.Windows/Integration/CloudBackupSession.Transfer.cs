@@ -194,7 +194,7 @@ public sealed partial class CloudBackupSession
         RequireExpected(j.Archived, archived);
         var restored = await drive.CopyAsync(archived, j.Parent, Path.GetFileName(j.Path), token);
         await Repository.VerifyAsync(restored, j.Remote!.Version, archived.QuickXorHash, false, token);
-        j = j with { Phase = "Restored" }; Save(j);
+        j = j with { Phase = "Restored", RestoredItem = restored }; Save(j);
         await CompleteRestoreAsync(j, restored, token);
     }
     private async Task CompleteRestoreAsync(CloudJournal j, RemoteItem restored, CancellationToken token)
@@ -207,7 +207,7 @@ public sealed partial class CloudBackupSession
         await FinishHistoryAsync(j, j.Archived, j.Remote.Version, token);
         File.Delete(JournalPath(j.Id));
     }
-    private async Task FinishHistoryAsync(CloudJournal j, RemoteItem item, FileVersion version, CancellationToken token)
+    private async Task<RemoteItem> FinishHistoryAsync(CloudJournal j, RemoteItem item, FileVersion version, CancellationToken token)
     {
         var kind = j.Publish && j.Protection != ProtectionKind.Conflict ? ProtectionKind.Archive : ProtectionKind.Conflict;
         var current = await drive.GetAsync(item.Id, token);
@@ -219,11 +219,15 @@ public sealed partial class CloudBackupSession
             if (current.Name != HistoryPendingName(j)) throw new IOException("Unexpected history filename.");
             if (j.PreviousHistory is not null) await Protection.RemovePreviousAsync(project.ProjectId, project.Destination, j.Path, j.PreviousHistory, token);
             current = await drive.MoveAsync(current, j.ArchiveParent!, Path.GetFileName(j.Path), null, token);
+            // Preserve the acknowledged rename before publishing its metadata. A failed metadata
+            // response must not make our own history rotation look like an external archive edit.
+            Save(j with { HistoryFinishedItem = current });
         }
         var revision = AsRevision(j, current, version);
         if (j.Remote is { ContentHashKnown: false } && item.Id == j.Archived?.Id)
             revision = revision with { ContentHashKnown = false };
         await Protection.SaveAsync(project.Destination, kind, revision, current, token);
+        return current;
     }
     private async Task ContinueAsync(CloudJournal j, CancellationToken token, bool recovery = false)
     {
@@ -298,11 +302,11 @@ public sealed partial class CloudBackupSession
         else
         {
             j = await UploadLocalAsync(j, true, token);
-            if (j.Archived is not null) await FinishHistoryAsync(j, j.Archived, j.Remote!.Version, token);
+            if (j.Archived is not null) j = j with { HistoryFinishedItem = await FinishHistoryAsync(j, j.Archived, j.Remote!.Version, token) };
             j = j with { Committed = new(2, AsRevision(j, j.Uploaded!, j.Local!), j.Uploaded!), Phase = "Published" };
         }
         if (j.Direction == SyncDirection.Pull && j.Uploaded is not null)
-            await FinishHistoryAsync(j, j.Uploaded, j.Local!, token);
+            j = j with { HistoryFinishedItem = await FinishHistoryAsync(j, j.Uploaded, j.Local!, token) };
         Save(j); await CommitAsync(j.Committed!, token); await FinishAsync(j, token, verifyPublished: recovery || j.Direction != SyncDirection.Backup);
     }
     private async Task FinishAsync(CloudJournal j, CancellationToken token, bool verifyPublished = true)

@@ -45,7 +45,7 @@ internal static class Program
         if (args.Length == 0 || args is ["--help"] or ["help"])
         {
             Console.WriteLine("HarborBackup — OneDrive account backup, protected replacement and recovery\n" +
-                "cloud-connect [--client-id <id>] | cloud-bind [--name HarborBackup] | cloud-upgrade | cloud-folders | cloud-status | cloud-disconnect\ncloud-inspect|cloud-resolve --destination <project> --path <file> [--prefer local|<revision> --expected <confirmation>]\npreview|backup|pull|recover|verify|status|devices|pause|resume\n" +
+                "cloud-connect [--client-id <id>] | cloud-bind [--name HarborBackup] | cloud-upgrade | cloud-folders | cloud-status | cloud-disconnect\ncloud-inspect|cloud-resolve [--project-id <id>|--destination <path>] --path <file> [--prefer local|<revision> --expected <confirmation>]\npreview|backup|pull|recover|verify|status|devices|pause|resume\n" +
                 "        [--config <absolute projects.json>] [--system-config <absolute backup-settings.json>]\n" +
                 "        [--direction Backup|Pull]\n" +
                 "        [--project-id <id> | --destination <path>] [--full-check] [--json] [--automatic]\n" +
@@ -54,7 +54,7 @@ internal static class Program
                 "restore-list [--project-id <id>|--destination <path>] [--scope current|archive|all] [--path <relative prefix>] [--json]\n" +
                 "restore|restore-test --output <independent directory> [same selectors] [--json]\n" +
                 "        restore-test [--max-bytes <bytes>] [--groups <1-256>] (rotates groups; downloads into a fresh run directory)\n" +
-                "Pull requires --destination. Verify is read-only; backup --full-check also writes.\n" +
+                "Pull requires --project-id or --destination. Verify is read-only; backup --full-check also writes.\n" +
                 "Automatic backup budgets use schedule.automaticMaxTransferMiB/automaticMaxDurationMinutes (0 = unlimited). Budget cutoff returns 2 after active files finish.\n" +
                 "Exit codes: 0 complete, 1 failure, 2 attention/busy, 130 cancelled.\n" +
                 "Cloud comparison reads metadata only. Full checks hash local files. Choose a management folder and a separate project destination.");
@@ -98,9 +98,9 @@ internal static class Program
             if (flags.Contains("--automatic") && (args[0] != "backup" || options.ContainsKey("--selection")))
                 throw new ArgumentException("--automatic requires backup without a selection.");
             if (flags.Contains("--prepare-upload") && (args[0] != "preview" || direction != SyncDirection.Backup || destination is null))
-                throw new ArgumentException("--prepare-upload requires preview --destination with Backup direction.");
+                throw new ArgumentException("--prepare-upload requires preview with an explicit project and Backup direction.");
             if (options.ContainsKey("--selection") && (args[0] is not ("backup" or "pull") || destination is null))
-                throw new ArgumentException("--selection requires backup/pull --destination.");
+                throw new ArgumentException("--selection requires backup/pull with an explicit project.");
             if (args[0] == "devices")
             {
                 using var runLock = new RunLock();
@@ -142,7 +142,11 @@ internal static class Program
                     foreach (var project in result.Projects)
                     {
                         Console.WriteLine($"项目：{project.Destination} | 结果={project.ExitCode}");
-                        foreach (var file in project.Files) Console.WriteLine($"  {file.Action,-20} {file.Path} | 修改={file.Changed} | {file.FailureKind} | {file.Error}");
+                        foreach (var file in project.Files)
+                        {
+                            var action = file.Direction is { } fileDirection ? $"{fileDirection}/{file.Action}" : file.Action.ToString();
+                            Console.WriteLine($"  {action,-20} {file.Path} | 修改={file.Changed} | {file.FailureKind} | {file.Error}");
+                        }
                         foreach (var issue in project.Issues) Console.Error.WriteLine($"  {issue.Code}: {issue.Message}");
                     }
                 }

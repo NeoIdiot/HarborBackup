@@ -48,7 +48,7 @@ public sealed class DraftPreviewTests
                     Assert.AreEqual(local.Right, cloud.Right, "Both path fields must share their right edge.");
                     Assert.AreEqual(localButton.Left, cloudButton.Left);
                     Assert.AreEqual(localButton.Right, cloudButton.Right);
-                    Assert.AreEqual(Bounds(Find("ResolvedTargetFrame")).Right, cloudButton.Right);
+                    Assert.IsEmpty(dialog.Controls.Find("ResolvedTarget", true), "The cloud path is relative to OneDrive root; no duplicate resolved field is needed.");
                     foreach (var (field, button) in new[] { (local, localButton), (cloud, cloudButton) })
                     {
                         Assert.AreEqual(field.Top, button.Top, "Input frame and browse button must share their top edge.");
@@ -83,7 +83,7 @@ public sealed class DraftPreviewTests
     {
         public Task<CloudProjectOnboarding> InspectNewProjectAsync(ProjectDefinition project, CancellationToken token) => throw new AssertFailedException("Editing an existing project must remain offline.");
         public int Saves;
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new AssertFailedException("Saving must not browse the cloud.");
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new AssertFailedException("Saving must not browse the cloud.");
         public Task<ConfigurationDraft> LoadAsync() => Task.FromResult(editor.Load());
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.FromResult(editor.Validate(draft));
         public Task<bool> SaveAsync(ConfigurationDraft draft, ConfigurationPart part)
@@ -145,7 +145,7 @@ public sealed class DraftPreviewTests
             {
                 UiText.SetLanguage(language);
                 var copy = new FileDecision(FileAction.Copy, true, FileSide.Target, FileSide.Target, ProtectionKind.Archive, "ExplicitLocalUpload");
-                var report = new PreviewReport([new("Demo", [new("a.txt", copy, true, false), new("b.txt", copy, true, false)], [], new())])
+                var report = new PreviewReport([new("Demo", [new("a.txt", copy, true, false), new("b.txt", copy, true, false)], [], new()) { ProjectId = DeviceIdentity.Digest("demo") }])
                 { UploadSelection = new("Demo", true, [new("a.txt", "a", false, 1), new("b.txt", "b", false, 1)]) { ProjectId = DeviceIdentity.Digest("demo") } };
                 using var dialog = new PreviewDialog(report, source: @"C:\Example", target: "OneDrive/Demo", allowUpload: true);
                 dialog.Show();
@@ -174,7 +174,7 @@ public sealed class DraftPreviewTests
         public int Saves;
         public int Calls;
         public ConfigurationSnapshot? LastPreview;
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new NotSupportedException();
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new NotSupportedException();
         public Task<ConfigurationDraft> LoadAsync() => Task.FromResult(editor.Load());
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.Run(() => editor.Validate(draft));
         public Task<bool> SaveAsync(ConfigurationDraft draft, ConfigurationPart part) { Saves++; return Task.FromResult(true); }
@@ -346,8 +346,8 @@ public sealed class DraftPreviewTests
             {
                 var decision = new FileDecision(FileAction.Copy,false,FileSide.Source,FileSide.None,ProtectionKind.None,"TargetOnly");
                 var plans = Enumerable.Range(0,20000).Select(i => new PreviewPlan(i+".txt",decision,true,false)).ToArray();
-                var report = new PreviewReport([new("Projects/Demo",plans,[],new())])
-                { PullSelection = pull ? new("Projects/Demo",false,plans.Select(p => new PullFileSelection(p.Path,p.Path,true,1)).ToArray()) : null };
+                var report = new PreviewReport([new("Projects/Demo",plans,[],new()) { ProjectId = DeviceIdentity.Digest("demo") }])
+                { PullSelection = pull ? new("Projects/Demo",false,plans.Select(p => new PullFileSelection(p.Path,p.Path,true,1)).ToArray()) { ProjectId = DeviceIdentity.Digest("demo") } : null };
                 var watch = Stopwatch.StartNew();
                 using var preview = new PreviewDialog(report,pull,"C:\\Example","OneDrive/Projects/Demo");
                 preview.Show();

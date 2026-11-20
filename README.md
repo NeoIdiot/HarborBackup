@@ -7,7 +7,8 @@ Back up Windows folders to personal OneDrive while preserving file names and dir
 ## Features
 
 - Choose a local folder and a separate cloud destination for each project; preview exclusions and confirm individual uploads or downloads.
-- Backup leaves source files unchanged; Pull leaves cloud contents unchanged. Neither operation propagates deletions.
+- Manual Backup leaves source files unchanged; Pull leaves cloud contents unchanged. Deletions are never propagated.
+- Choose an automatic backup mode for each project: Upload only (default), Two-way backup or Download only.
 - Compare changes against a common baseline. Changes on both sides require an explicit choice; different contents are protected before replacement, and the baseline advances after verification.
 - Keep the previous ordinary version, with separate conflict copies and recovery materials. Restore current files or the previous archive into an independent folder and verify downloaded contents.
 - Configure backup intervals, pause, transfer/time budgets and upload/download speed limits. Inspect project health, run history and JSON reports.
@@ -22,7 +23,7 @@ Actual controls are populated with synthetic data; no real OneDrive account tran
 
 The current application targets Windows x64 and personal Microsoft OneDrive accounts. It uses C#, .NET 10 and WinForms.
 
-Cloud backups remain ordinary files. This is a file backup tool, without system images, NTFS permissions, alternate data streams or link semantics. Normal comparison and full checks use local hashes and cloud version metadata without downloading cloud file bodies. Independent restores and restore tests download and verify contents. Ordinary history retains one previous copy, rather than arbitrary point-in-time snapshots.
+Cloud backups remain ordinary files. This is a file backup tool, without system images, NTFS permissions, alternate data streams or link semantics. Normal comparison and full checks use local hashes and cloud version metadata without downloading cloud file bodies. Pull, permitted automatic download plans, independent restores and restore tests download and verify contents. Ordinary history retains one previous copy, rather than arbitrary point-in-time snapshots.
 
 The old 0.4 / PowerShell configuration and data are not imported automatically. See the [user guide](docs/user-guide/onedrive-account.en-US.md) for initialization, upgrades and recovery.
 
@@ -52,6 +53,8 @@ Run these commands at the repository root. Before testing, exit HarborBackup fro
 ```
 
 See [Getting started](docs/development/getting-started.md) for a fresh setup, development launch, Inno Setup bootstrap and isolated installation validation. Building and synthetic tests do not need a real OneDrive account.
+
+Completed production installers are collected in `artifacts/installers`, with their SHA-256 and original build report. For an existing build, run `./scripts/release/Export-Installer.ps1` to populate this folder. Preview cleanup of old build and test runs with `./scripts/build/Clean-Artifacts.ps1 -WhatIf`.
 
 ## Documentation and contributions
 

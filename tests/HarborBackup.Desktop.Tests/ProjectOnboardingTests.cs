@@ -15,7 +15,7 @@ public sealed class ProjectOnboardingTests
     private sealed class Presenter(ConfigurationEditor editor, CloudProjectOnboarding inspection, bool failedReview) : IConfigurationPresenter
     {
         public int Saves, Reviews, Inspections;
-        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId) => throw new AssertFailedException("Unexpected browse.");
+        public Task<CloudFolderListing> BrowseCloudAsync(string? folderId, CancellationToken token = default, bool refresh = false) => throw new AssertFailedException("Unexpected browse.");
         public Task<ConfigurationDraft> LoadAsync() => Task.FromResult(editor.Load());
         public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.FromResult(editor.Validate(draft));
         public Task<CloudProjectOnboarding> InspectNewProjectAsync(ProjectDefinition project, CancellationToken token)

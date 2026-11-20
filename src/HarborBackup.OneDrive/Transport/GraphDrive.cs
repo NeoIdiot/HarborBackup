@@ -17,8 +17,10 @@ public sealed partial class GraphDrive : ICloudDrive, ICloudChanges, ICloudDiagn
     private readonly int uploadChunkBytes;
     private readonly TransferRateLimiter uploadRate, downloadRate;
     public CloudNetworkMetrics NetworkMetrics => new(Interlocked.Read(ref requestCount), Interlocked.Read(ref retryCount), Interlocked.Read(ref retryWait), Interlocked.Read(ref throttledCount));
+    public DateTimeOffset? RetryNotBeforeUtc => retryGate.NotBefore();
+    public bool YieldLongRetryWaits { get; set; }
     public GraphDrive(IAccessTokens tokens, string drive, HttpMessageHandler? handler = null, GraphTransferOptions? options = null)
-        : this(tokens, drive, handler, new CloudRetryGate(), options: options) { }
+        : this(tokens, drive, handler, handler is null ? CloudRetryGate.Shared : new CloudRetryGate(), options: options) { }
     internal GraphDrive(IAccessTokens tokens, string drive, HttpMessageHandler? handler, CloudRetryGate gate, Func<bool>? networkAvailable = null, GraphTransferOptions? options = null,
         TimeProvider? rateTimeProvider = null, Func<TimeSpan, CancellationToken, Task>? rateWait = null)
     {
@@ -66,7 +68,12 @@ public sealed partial class GraphDrive : ICloudDrive, ICloudChanges, ICloudDiagn
         for (var attempt = 0; ; attempt++)
         {
             if (networkAvailable is not null) CloudNetworkAvailability.EnsureAvailable(token, networkAvailable);
-            Interlocked.Add(ref retryWait, await retryGate.WaitAsync(uri.Host, token));
+            try { Interlocked.Add(ref retryWait, await retryGate.WaitAsync(uri.Host, token, YieldLongRetryWaits)); }
+            catch (CloudCooldownException cooldown)
+            {
+                Interlocked.Add(ref retryWait, cooldown.WaitedMilliseconds);
+                throw;
+            }
             using var request = new HttpRequestMessage(method, uri);
             using var requestDeadline = CancellationTokenSource.CreateLinkedTokenSource(token);
             request.Options.Set(NetworkRequestContext.AttemptKey, attempt + 1);
@@ -103,13 +110,22 @@ public sealed partial class GraphDrive : ICloudDrive, ICloudChanges, ICloudDiagn
             var transient = (int)result.StatusCode == 429 || (method == HttpMethod.Get || readOnlyBatch) && (int)result.StatusCode is 503 or 504;
             if (transient)
             {
-                retryGate.Defer(uri.Host, result.Headers.RetryAfter, attempt);
+                var delay = retryGate.Defer(uri.Host, result.Headers.RetryAfter, attempt);
+                if (retryGate.NotBefore(uri.Host) is { } due) request.Options.Set(NetworkRequestContext.RetryNotBeforeKey, due);
+                if (YieldLongRetryWaits && delay > TimeSpan.FromSeconds(5)) return result;
                 if (attempt < 4)
                 {
                     result.Dispose();
                     Interlocked.Increment(ref retryCount);
                     continue;
                 }
+            }
+            else if (result.Headers.RetryAfter is not null && ((int)result.StatusCode >= 500 || result.StatusCode == HttpStatusCode.RequestTimeout))
+            {
+                // A failed write is not replayed, but its server-requested cooldown
+                // still applies to later requests and newly opened drive instances.
+                retryGate.Defer(uri.Host, result.Headers.RetryAfter, attempt);
+                if (retryGate.NotBefore(uri.Host) is { } due) request.Options.Set(NetworkRequestContext.RetryNotBeforeKey, due);
             }
             return result;
         }

@@ -2,15 +2,19 @@
 
 先阅读 [当前账户传输规则](../architecture/onedrive-account-transport.md) 和 [安装与源码布局](../architecture/storage-layout.md)。版本实测记录见 [验证记录索引](validation-index.md)，仅用于审计。
 
-当前版本的构建、打包及验证限制见 [0.9.17 发布记录](validation-0.9.17.md)。
+当前版本的构建、打包及验证限制见 [0.9.21 发布记录](validation-0.9.21.md)。
 
 Windows / .NET 10 SDK，global.json 固定 SDK 基线；使用 scripts/build/Use-DotNet.ps1。NuGet 缓存、工具和报告位于 artifacts，禁止提交。
 
-发布、打包、完整测试和隔离安装验收成功后自动清理旧产物。`scripts/build/artifact-retention.json` 的 `keepCount` 默认是 2：每类保留最近两批，另保留最近一批成功结果及当前操作使用的输入/输出。失败时不触发清理，旧失败批次可由下次成功运行清理。发布、测试、打包、安装验收和手动清理在同一仓库互斥。
+发布、打包、完整测试和隔离安装验收成功后自动清理旧产物。`scripts/build/artifact-retention.json` 的 `keepCount` 默认是 2：每类保留最近两批，另保留最近一批成功结果、最后包含正常安装包的发布批次及当前操作使用的输入/输出。`PreservePaths` 可以指向批次内的文件或子目录，清理会保护所属批次。失败时不触发清理，旧失败批次可由下次成功运行清理。发布、测试、打包、安装验收、安装包导出和手动清理在同一仓库互斥。
 
 清理只处理 `artifacts/publish/HarborBackup-*`、`artifacts/install-validation/<32位ID>` 和 `artifacts/test-results` 的批次子目录；不清理依赖、工具、诊断、截图、其他测试材料或正式安装数据。链接及含链接的目录跳过。历史验证文档中的本地产物路径可能随清理失效，文档和已记录的摘要不受影响。
 
-立即清理可执行 `./scripts/build/Clean-Artifacts.ps1`；加 `-WhatIf` 仅列出计划，加 `-KeepCount 1` 可临时只保留一批及最近成功结果。清理边界、保留策略和并发保护的合成测试为 `./scripts/test/Test-ArtifactCleanup.ps1`，完整测试入口也会先执行它。测试报告现在按每轮独立目录保存，不再持续堆入 `test-results/current`。
+正常 `Build-Installer.ps1` 成功后自动调用 `Export-Installer.ps1`，将校验后的安装包放到固定入口 `artifacts/installers`；`-ValidationBuild` 不更新该入口。已有包首次导出可运行 `./scripts/release/Export-Installer.ps1`，省略参数时选择 `artifacts/publish` 中最近的正常 `installers/package-report.json`，也可用 `-PublishDirectory <发布目录>` 指定批次。用 `Invoke-Item ./artifacts/installers` 快速打开。
+
+固定入口包含带版本名的 exe、原始 `package-report.json`、`SHA256SUMS.txt`、`latest.json` 和 README。导出只复制并校验，不重建或改写原报告的 source，原 publish 树继续作为证据保留。latest 表示最近正常构建的选择结果（显式指定时为所选批次），不保证是最高版本、仓库 HEAD 的构建或已通过安装验收；来源和实测范围以报告及对应验证记录为准。
+
+立即清理可执行 `./scripts/build/Clean-Artifacts.ps1`；加 `-WhatIf` 仅列出计划，加 `-KeepCount 1` 可临时每类只保留最近一批，前述成功、正常安装包和使用中的额外保护批次仍保留。清理边界、保留策略和并发保护的合成测试为 `./scripts/test/Test-ArtifactCleanup.ps1`，完整测试入口也会先执行它。测试报告现在按每轮独立目录保存，不再持续堆入 `test-results/current`。
 
 ## 命令
 

@@ -18,7 +18,8 @@ public sealed class ProjectHealthUiTests
         UiText.SetLanguage("en-US"); var now = DateTimeOffset.UtcNow;
         var health = new ProjectHealthSnapshot("binding", now.AddHours(-30), now.AddHours(-1), 2, now.AddHours(-25), true, "Archive", 3);
         var row = new ProjectRow("Demo", "", "", "") { Health = health };
-        StringAssert.Contains(row.DisplayProtection, "3 files (selected scope)");
+        Assert.AreEqual(UiText.Text("有待处理项"), row.DisplayProtection);
+        StringAssert.Contains(row.DisplayProtectionDetails, "3 files (selected scope)");
         StringAssert.Contains(row.DisplayBacklog, "count may be incomplete");
         var details = ProjectHealthPresentation.Attention([row], now);
         Assert.HasCount(1, details);
@@ -30,6 +31,28 @@ public sealed class ProjectHealthUiTests
         Assert.IsEmpty(ProjectHealthPresentation.Attention([clear], now));
         Assert.IsFalse(policy.ShouldNotify(state with { Details = [] }));
         Assert.IsTrue(policy.ShouldNotify(state));
+    }
+
+    [TestMethod]
+    [DataRow("zh-CN")]
+    [DataRow("en-US")]
+    public void CompactHealthPreservesUnknownPartialAndStaleEvidence(string language)
+    {
+        UiText.SetLanguage(language);
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            var health = new ProjectHealthSnapshot("binding", now);
+            Assert.AreEqual(UiText.Text("状态未知"), new ProjectRow("Demo", "", "", "").DisplayProtection);
+            var row = new ProjectRow("Demo", "", "", "") { Health = health, NeedsInitialization = true };
+            Assert.AreEqual(UiText.Text("待初始化"), row.DisplayProtection);
+            Assert.AreEqual(UiText.Text("状态未知"), ProjectHealthPresentation.Compact(new("binding"), now));
+            Assert.AreEqual(UiText.Text("无已知积压"), ProjectHealthPresentation.Compact(health, now));
+            Assert.AreEqual(UiText.Text("记录较旧"), ProjectHealthPresentation.Compact(health with { LastFullSuccessUtc = now.AddHours(-25) }, now));
+            Assert.AreEqual(UiText.Text("有待处理项"), ProjectHealthPresentation.Compact(health with { PendingCountIncomplete = true }, now));
+            Assert.AreEqual(UiText.Text("有待处理项"), ProjectHealthPresentation.Compact(health with { OldestPendingUtc = now.AddDays(-1) }, now));
+        }
+        finally { UiText.SetLanguage("zh-CN"); }
     }
 
     [TestMethod]
@@ -50,7 +73,7 @@ public sealed class ProjectHealthUiTests
                     var version = new FileVersion(new string('a', 64), 12345, stamp, stamp);
                     var device = new string('d', 64);
                     using var dialog = new CloudConflictDialog(new("Demo", "a.txt", version,
-                        [new(1, "revision", "Demo", "a.txt", device, [], "item", "etag", version, stamp)], "confirmation"));
+                        [new(1, "revision", new string('a', 64), "a.txt", device, [], "item", "etag", version, stamp)], "confirmation") { ProjectId = new string('a', 64) });
                     dialog.Show(host);
                     var list = (ListBox)dialog.Controls.Find("ConflictVersions", true).Single();
                     Assert.AreEqual(2, list.Items.Count); list.SelectedIndex = 1;

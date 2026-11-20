@@ -14,7 +14,7 @@ namespace HarborBackup.Windows.Tests;
 public sealed class PullRetryTests
 {
     [TestMethod]
-    public async Task NetworkLossKeepsPullEvidenceAndOriginalCloudContentUntilExplicitRetry()
+    public async Task NetworkLossKeepsPullEvidenceAndOriginalCloudContentForSafeRetry()
     {
         using var f = new Fixture(); var a = f.Device("A"); var b = f.Device("B");
         File.WriteAllText(Path.Combine(a.P.Source, "a.txt"), "cloud content"); await Apply(a.S);
@@ -26,7 +26,9 @@ public sealed class PullRetryTests
         Assert.AreEqual(FileFailureKind.Network, failed.Projects.Single().Files.Single().FailureKind);
         Assert.AreEqual(CloudNetworkAvailability.Offline, failed.Projects.Single().Files.Single().Error);
         Assert.IsTrue(failed.Projects.Single().Issues.Any(i => i.Code == "PendingOperationsRetained"));
-        Assert.IsFalse(CloudRunStatus.IsOfflineInterruption(failed.Projects.Single()));
+        Assert.IsTrue(CloudRunStatus.IsOfflineInterruption(failed.Projects.Single()));
+        Assert.AreEqual(RecoveryDisposition.AutomaticRetry, CloudRunStatus.Recovery(failed.Projects.Single()));
+        Assert.AreEqual(b.P.ProjectId, CloudAutomaticRecovery.ReadCandidates(b.C).Single().ProjectId);
         var pending = CloudMapping.ScanPending(b.C).Files;
         Assert.HasCount(1, pending);
         Assert.AreEqual("cloud content", File.ReadAllText(Path.Combine(a.P.Source, "a.txt")));

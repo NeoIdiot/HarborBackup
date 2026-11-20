@@ -15,6 +15,8 @@ public sealed class CloudTransportTests
 {
     internal class FakeDrive : ICloudDrive
     {
+        internal sealed record BodyTransfer(string Direction, string ItemId, string ParentId, string Name, long Bytes);
+        public readonly System.Collections.Concurrent.ConcurrentQueue<BodyTransfer> BodyTransfers = new();
         public readonly System.Collections.Concurrent.ConcurrentDictionary<string,(RemoteItem Item,string Parent,byte[] Bytes)> Items = new();
         private readonly object folderGate = new();
         public Func<string, CancellationToken, Task>? BeforeUpload;
@@ -70,6 +72,7 @@ public sealed class CloudTransportTests
             if (Items.Values.Any(v => v.Parent==p && v.Item.Name.Equals(n,StringComparison.OrdinalIgnoreCase))) throw new IOException("Concurrent create rejected.");
             using var memory=new MemoryStream();await s.CopyToAsync(memory,t);
             var result=Add(p,n,memory.ToArray());
+            BodyTransfers.Enqueue(new("Upload", result.Id, p, n, memory.Length));
             if (AfterUpload is not null) await AfterUpload(result);
             if(FailAfterCommit&&n.EndsWith(".json")&&n!="repository.json"&&Items[p].Item.Name!="locations"&&n!="index.json")
             {FailAfterCommit=false;throw new IOException("Simulated lost commit response.");}
@@ -86,6 +89,7 @@ public sealed class CloudTransportTests
                 parent = ancestor.Parent;
             }
             Assert.AreEqual(i.ETag,Items[i.Id].Item.ETag);await d.WriteAsync(Items[i.Id].Bytes,t);
+            BodyTransfers.Enqueue(new("Download", i.Id, Items[i.Id].Parent, i.Name, Items[i.Id].Bytes.LongLength));
         }
         public Task DeleteAsync(RemoteItem item, CancellationToken token)
         {

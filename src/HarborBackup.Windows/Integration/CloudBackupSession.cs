@@ -15,7 +15,8 @@ public sealed record CloudJournal(int SchemaVersion, string Id, string Binding, 
     string Parent, string? Session = null, RemoteItem? Uploaded = null, RemoteItem? Archived = null,
     string? ArchiveParent = null, string? ArchiveName = null, RemoteItem? PreviousHistory = null,
     CloudFileMetadata? Committed = null, string Phase = "Prepared", string? QuickXor = null,
-    DateTimeOffset CreatedUtc = default, FileVersion? Incoming = null, CloudMapping? Mapping = null);
+    DateTimeOffset CreatedUtc = default, FileVersion? Incoming = null, CloudMapping? Mapping = null, RemoteItem? RestoredItem = null,
+    RemoteItem? HistoryFinishedItem = null);
 
 /// <summary>Ordinary cloud tree; append-only metadata is evidence, never a replacement for the live directory.</summary>
 public sealed partial class CloudBackupSession(ProjectDefinition project, ConfigurationSnapshot config,
@@ -29,6 +30,7 @@ public sealed partial class CloudBackupSession(ProjectDefinition project, Config
     private readonly ConcurrentDictionary<string, RemoteItem> directories = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, PreparedUpload> preparedSources = new(StringComparer.OrdinalIgnoreCase);
     public ReadMetrics? Metrics { get; set; }
+    internal CloudResumeTaskStore? ResumeTask { get; set; }
     private CloudProtectionStore Protection => new(Repository, drive, account, data);
     private string Binding => CloudMapping.Bind(project, config);
     private string StateRoot => Path.Combine(data.State, "devices", config.Preview.DeviceId, "cloud", Binding);
@@ -79,6 +81,8 @@ public sealed partial class CloudBackupSession(ProjectDefinition project, Config
     private string JournalPath(string id) => Path.Combine(JournalRoot, id + ".json");
     private void Save(CloudJournal value)
     {
+        // Authorization is durable before the transaction can cause a business side effect.
+        ResumeTask?.Track(value);
         AtomicJson.Write(JournalPath(value.Id), value, AtomicJson.Signature(AtomicJson.ReadText(JournalPath(value.Id))));
         if (Metrics is { } metrics) lock (metrics) metrics.LocalJournalWrites++;
     }

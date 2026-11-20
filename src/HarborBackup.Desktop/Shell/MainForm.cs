@@ -29,7 +29,7 @@ internal sealed partial class MainForm : Form
     private readonly Label welcomeHeading = AppStyle.Label("", 48);
     private readonly Label welcomeBody = AppStyle.Label("", 56);
     private readonly ProgressBar progressBar = new() { Dock = DockStyle.Top, Height = 5, Visible = false };
-    private readonly DataGridView projectGrid = AppStyle.Grid(("Destination", "项目 / 目标相对路径", 19), ("DisplayLocalStatus", "本机状态", 12), ("DisplaySource", "本地源目录", 17), ("Target", "实际目标", 17), ("DisplayResult", "最近结果", 12), ("DisplayProtection", "项目保护状态", 23));
+    private readonly DataGridView projectGrid = AppStyle.Grid(("Destination", "项目 / 云端目录", 24), ("DisplayLocalStatus", "本机状态", 12), ("DisplaySource", "本地目录", 20), ("DisplayResult", "最近结果", 14), ("DisplayProtection", "保护状态", 17), ("DisplayAutomaticMode", "备份模式", 13));
     private readonly DataGridView overviewGrid = AppStyle.Grid(("Destination", "备份项目", 25), ("DisplayResult", "最近结果", 20), ("DisplayLastFullSuccess", "最近完整成功", 18), ("DisplayLastRestoreVerification", "最近还原核验", 18), ("DisplayBacklog", "已知积压", 19));
     private readonly DataGridView historyGrid = AppStyle.Grid(("Time", "结束时间", 25), ("Mode", "操作", 15), ("ExitCode", "结果", 15), ("ProjectNames", "项目", 45));
     private readonly DataGridView detailGrid = AppStyle.Grid(("DisplayProject", "项目", 20), ("Path", "相对路径", 25), ("DisplayAction", "动作", 15), ("DisplayDetails", "详情", 40));
@@ -67,7 +67,7 @@ internal sealed partial class MainForm : Form
         var sidebar = BuildSidebar();
         pause = AppStyle.Button("暂停自动备份", async (_, _) => await controller.SetPausedAsync(!controller.State.Paused));
         cancel = AppStyle.Button("停止当前操作", (_, _) => controller.Cancel());
-        var top = AppStyle.Toolbar(cancel, pause, Operation("立即备份", DesktopCommand.Backup, primary: true));
+        var top = AppStyle.Toolbar(cancel, pause, Operation("立即运行", DesktopCommand.RunConfigured, primary: true));
         top.FlowDirection = FlowDirection.RightToLeft; top.WrapContents = false; top.Dock = DockStyle.Fill; top.Anchor = AnchorStyles.Right;
         top.Padding = Padding.Empty;
         pageTitle.AutoSize = true; pageTitle.Dock = DockStyle.Fill; pageTitle.MinimumSize = new Size(180, 40);
@@ -339,7 +339,8 @@ internal sealed partial class MainForm : Form
         var accountReady = controller.CloudAccount.Enabled && !controller.CloudAccount.RequiresAuthorization;
         UiText.Set(welcomeBody, !accountReady ? "请先连接 OneDrive 账户并选择云端仓库。"
             : state.NeedsSetup ? "选择备份位置，然后添加项目。" : "备份位置已就绪，请添加项目。");
-        foreach (var button in idleButtons) button.Enabled = !state.Busy && state.Configuration?.Projects.Count > 0;
+        foreach (var button in idleButtons) button.Enabled = !state.Busy && state.Configuration?.Projects.Count > 0 &&
+            (button.Name != "立即运行" || !state.Paused);
         pause.Enabled = state.Configuration is not null;
         UiText.Set(pause, state.Paused ? "恢复自动备份" : "暂停自动备份");
         cancel.Enabled = state.CanCancel;
@@ -384,7 +385,8 @@ internal sealed partial class MainForm : Form
         var text = historyFilter.Text.Trim();
         historyGrid.DataSource = (previousHistory ?? []).Where(r => (selectedCode == -1 || r.ExitCode == selectedCode) &&
             (!historySince.Checked || r.Time.ToLocalTime().Date >= historySince.Value.Date) &&
-            (text.Length == 0 || r.Report?.Projects.Any(p => p.Destination.Contains(text, StringComparison.OrdinalIgnoreCase)) == true)).ToArray();
+            (text.Length == 0 || r.Report?.Projects.Any(p => p.ProjectId.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                p.Destination.Contains(text, StringComparison.OrdinalIgnoreCase)) == true)).ToArray();
     }
     private void RefreshLanguage()
     {
@@ -415,6 +417,15 @@ internal sealed partial class MainForm : Form
     }
     public bool CanExit() => !settings.Dirty || MessageBox.Show(this, UiText.Text("设置页有未保存的修改。退出并放弃这些修改？"), UiText.Text("退出程序"), MessageBoxButtons.OKCancel) == DialogResult.OK;
     public void ClosePermanently() { closingPermanently = true; Close(); }
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Escape)
+        {
+            Close();
+            return true;
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
     protected override void Dispose(bool disposing)
     {
         if (disposing) { catalogCancellation?.Cancel(); controller.Changed -= UpdateState; UiText.Changed -= RefreshLanguage; }

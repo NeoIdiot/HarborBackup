@@ -8,7 +8,10 @@ namespace HarborBackup.Desktop.Presentation;
 internal interface IConfigurationPresenter
 {
     Task<HarborBackup.Windows.Integration.CloudProjectOnboarding> InspectNewProjectAsync(ProjectDefinition project, CancellationToken token);
-    Task<HarborBackup.Windows.Integration.CloudFolderListing> BrowseCloudAsync(string? folderId);
+    Task<HarborBackup.Windows.Integration.CloudFolderListing> BrowseCloudAsync(string? folderId,
+        CancellationToken token = default, bool refresh = false);
+    Task PrefetchCloudAsync(HarborBackup.Windows.Integration.CloudFolderListing listing,
+        CancellationToken token, string? preferredFolderId = null) => Task.CompletedTask;
     Task<ConfigurationDraft> LoadAsync();
     Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft);
     Task<PreviewReport> PreviewAsync(ConfigurationDraft draft, string? destination = null,
@@ -28,11 +31,10 @@ internal sealed class ConfigurationPresenter(DesktopController controller) : ICo
             using var drive = store.Open(account);
             return HarborBackup.Windows.Integration.CloudProjectOnboarding.InspectAsync(controller.Paths.Data, account, project, drive, cancellation).GetAwaiter().GetResult();
         }, token);
-    public Task<HarborBackup.Windows.Integration.CloudFolderListing> BrowseCloudAsync(string? folderId)
-    {
-        var session = new HarborBackup.Windows.Integration.CloudAccountSession(controller.Paths.Data);
-        return session.BrowseAsync(session.Read(), folderId, CancellationToken.None);
-    }
+    public Task<HarborBackup.Windows.Integration.CloudFolderListing> BrowseCloudAsync(string? folderId,
+        CancellationToken token = default, bool refresh = false) => controller.FolderBrowser.BrowseAsync(folderId, token, refresh);
+    public Task PrefetchCloudAsync(HarborBackup.Windows.Integration.CloudFolderListing listing,
+        CancellationToken token, string? preferredFolderId = null) => controller.FolderBrowser.PrefetchAsync(listing, token, preferredFolderId);
     public Task<ConfigurationDraft> LoadAsync() => Task.Run(() => controller.Editor.Load());
     public Task<ConfigurationSnapshot> ValidateAsync(ConfigurationDraft draft) => Task.Run(() => controller.Editor.Validate(draft));
     public Task<PreviewReport> PreviewAsync(ConfigurationDraft draft, string? destination = null,

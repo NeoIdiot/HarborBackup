@@ -14,13 +14,17 @@ A new project receives one fixed 64-character hexadecimal ID. The editor display
 
 Editing a project's source or destination retains its identity and suppresses its previous mapping in this device's list. Cloud catalog refresh resolves current folder names and groups location revisions by project ID. Changing a destination does not move existing files; subsequent uploads and pulls use the new configuration.
 
+Preview selections, issue actions, conflict confirmations and version history use the project ID. Display paths describe the current location. After a rename, archives stored under that project's previous location remain available for listing and export, with the original archive location validated before reading. Older reports without a verifiable project ID remain read-only.
+
 More actions > Remove project works for both local and cloud-only entries. It updates this device's configuration only, retaining all local files, cloud files, history, conflicts, and recovery materials. Other devices are unaffected. Removed entries stay removed after refresh or restart. To add one again, choose its folder through Add project > Browse cloud.
 
 Connect your personal OneDrive account under Settings > Account and management folder. Select a HarborBackup management folder for metadata, archives and conflicts.
 
-Add a project, choose its local source, then use Browse cloud or enter a path relative to OneDrive root, such as Projects/DROP_CODE. This is the final destination: original files and subdirectories appear directly there. New paths are created on the first backup, without an extra backups, computer, project-ID or version-ID prefix. Preview before saving.
+Add a project, choose its Local folder, then use Browse cloud or enter a Cloud folder relative to OneDrive root, such as Projects/DROP_CODE. OneDrive root is the fixed starting point, so this example means OneDrive/Projects/DROP_CODE. Original files and subdirectories appear directly there. New paths are created on the first upload, without an extra backups, computer, project-ID or version-ID prefix. Preview before saving. The editor and project list show the relative cloud folder without a duplicate resolved-target field or column.
 
-Another device can connect the same management folder and Join cloud project with its own local source. Project targets must not overlap management storage or other targets. Existing nonempty project folders are allowed; files without trusted metadata are preserved for review.
+Browse cloud opens the project's recorded cloud folder when its ID is known. It briefly caches folder listings and preloads some child-folder listings after displaying the current folder. Going up or reopening the picker can reuse unexpired listings, reducing repeated waits. Use Refresh to see folders recently created, renamed or moved on another device. A failed refresh preserves the previous listing and current location. Closing the picker cancels unfinished reads. Browsing and selecting folders do not upload or download project files.
+
+Another device can connect the same management folder and Join cloud with its own local source. Project targets must not overlap management storage or other targets. Existing nonempty project folders are allowed; files without trusted metadata are preserved for review.
 
 ## Comparison and transfer
 
@@ -44,7 +48,7 @@ Settings allow separate upload and download limits in KiB/s; zero means unlimite
 
 The Issues page can browse current cloud files and their previous archived copies, filter paths and restore selected files to an independent output directory. Output must not overlap project sources, application, data or protection directories. Existing paths are never overwritten. The operation checks cloud versions before and after downloading and verifies SHA-256; missing trusted evidence is reported rather than counted as success. It does not update common baselines or initialize automatic backup.
 
-Restore tests create a new directory under the selected output root and retain recovered files and a JSON report. Optional byte budgets and rotating groups bound each run. A file larger than the budget is skipped; increase the budget to check that file. Project health displays the last complete successful run, the scope/count of the latest content restore verification, and the age of known backlog. Counts are lower bounds when selection, errors or budgets leave unobserved work. Pending work or a last complete success older than 24 hours raises an alert. A changed physical mapping does not inherit the old mapping's health evidence.
+Restore tests create a new directory under the selected output root and retain recovered files and a JSON report. Optional byte budgets and rotating groups bound each run. A file larger than the budget is skipped; increase the budget to check that file. The project list shows a short protection status in a single-height row. Hover over the status or choose More actions > View project status to inspect the last complete successful run, the scope/count of the latest content restore verification, and known backlog and its first recorded time. The overview also retains these details. Counts are lower bounds when selection, errors or budgets leave unobserved work. A status showing no known backlog does not certify unobserved files. A reminder is raised when known backlog has persisted for at least 24 hours or the last complete success was at least 24 hours ago. A changed physical mapping does not inherit the old mapping's health evidence.
 
 ```powershell
 HarborBackup.Cli.exe restore-list --destination "Projects/Demo" --scope all --json
@@ -54,23 +58,43 @@ HarborBackup.Cli.exe restore-test --destination "Projects/Demo" --scope all --ou
 
 `--scope` accepts `current`, `archive` or `all`; `--path` is an optional relative path prefix. A zero byte budget means unlimited; group counts range from 1 to 256. Rotation cursors are rebuildable cache. Verification timestamps describe only the reported sample, not the entire repository. `recover` remains the interrupted-transaction recovery command.
 
-The window and tray show Waiting for network while offline, and scheduled backups skip their offline triggers. The indicator clears when Windows detects a network again. If the Backup projects page is open, a cloud list interrupted by disconnection retries once. Automatic backups follow their configured interval. You can retry manual operations after reconnecting. Run records and recovery evidence remain available. OneDrive service, proxy and secure connection failures retain their own messages.
+The window and tray show Waiting for network while offline. A due run is retained, and its next interval advances only after the coordinator accepts it. When Windows detects a connection again, Desktop waits about two seconds before checking OneDrive and continuing an eligible original task. Other temporary service, proxy or connection failures use jittered backoff of roughly 15 seconds, 30 seconds and one minute, up to five minutes; a longer server retry deadline takes precedence. Long retry cooldowns release the run lock rather than keeping file workers occupied. If the Backup projects page is open, a cloud list interrupted by disconnection still retries once. Run records and recovery evidence remain available.
+
+Run details distinguish Waiting to retry automatically, Choose a version to continue, Action required before retrying and Stopped. Network waiting retains the cause and original task without raising a notification that asks someone to repair it; genuine conflicts and authorization problems in the same project remain visible. Automatic continuation rechecks the original file, cloud version and mapping. A completed upload with a lost receipt is reconciled before transferring again; when only commit or status publication remains, it completes those steps. Follow the specific details when a version choice, sign-in, permission repair or damaged-record review is required. Reconnection does not restart a task that was explicitly stopped or paused.
+
+A first explicit upload or pull interrupted by a network failure can continue only its recorded authorization. Unchecked and newly added files are excluded, and mapping readiness still requires complete-project conditions. A file completed by that task and changed later needs a new preview or normal comparison. Fast network retries retain the original automatic task's consumed budget; a new normal cycle can start a fresh budget.
 
 An installed release reports actionable issues in Windows Notification Center. Select a notification to open Issues, or find the run details in Run history. Repeated reports of the same problem are grouped. Windows settings control notification delivery.
 
 Saving a new project checks the selected cloud folder first. A registered folder offers to continue the existing project, preserving its identity and your chosen local folder and exclusions. If that project is already on this PC, a message asks you to edit it rather than adding it again. An unregistered nonempty folder opens Initial content review; confirm the review before saving settings. Cancellation or a failed check saves nothing. Review preserves both sides and transfers no business files. After saving, explicitly upload or retrieve to establish the mapping before automatic backup resumes. New projects require a connected account for this check; existing projects can still be edited offline.
 
-Backup uploads without modifying the local source. Pull is explicit and does not modify cloud file contents. Deletions are not propagated.
+Add project / Edit project offers an Automatic backup mode selector:
+
+| Mode | Business-file direction |
+| --- | --- |
+| Upload only (default) | Local folder → OneDrive |
+| Two-way backup | Upload local updates and download cloud updates |
+| Download only | OneDrive → Local folder |
+
+The project list shows the selected mode. This setting is local to each device; choose it separately on other PCs. Scheduled runs, Run now in the window or tray, and CLI `backup --automatic` follow each project's mode and use the global pause control, speed limits and automatic budgets. Run now retains the initial manual-operation requirement and is unavailable while automatic backup is paused. Explicit Upload selected and Download updates keep their stated directions and remain available during that pause; automatic budgets do not limit these manual operations.
+
+On Backup projects, select a local project and click Pause project to suspend its future automatic runs and automatic retries. The button becomes Resume project and the mode column shows Paused. The setting survives restart and other projects continue normally. Manual upload, download and preview remain available. This button is unavailable during an operation; use Stop current operation to stop running work. Resuming a project still respects the global pause.
+
+Download only does not upload local business files to the project's cloud folder. It may still upload management metadata and copies that protect different local contents before replacement. All modes retain both sides' extra files and never propagate deletions.
+
+Two-way backup chooses a direction from the common baseline rather than modification times. A file missing on one side is copied from the other when the selected mode permits that direction and trusted content evidence permits the transfer. Different changes on both sides, or unequal contents without a common baseline, retain conflict protection and require an explicit choice. Cloud files without sufficient evidence are not downloaded automatically. Comparison never downloads business contents; a selected download follows Pull's cloud-version checks, fresh local-content checks, protection and verified baseline commit. Deletions are not propagated, so a file deleted on one side may be restored by a later automatic run.
+
+Changing the automatic mode retains existing mappings, baselines and initialization. New projects and actual folder changes still require one completed manual upload or pull first. Network-interrupted tasks with verified original authorization can continue safely. Older records without task authorization, conflicting versions and mismatched mapping evidence retain affected files for review or manual recovery using the original mapping; other safe files in the project can proceed. Manual upload leaves local source files unchanged; manual download leaves cloud business contents unchanged. In projects.json, `automaticBackupMode` accepts `upload`, `bidirectional` or `download`; see the [configuration examples](../../config/examples/README.md) for existing Boolean settings and validation rules.
 
 Cloud comparisons use metadata, item IDs, version tags, sizes and checksums without downloading business file contents. Local SHA-256 caching follows size, UTC modification time and the local full-check interval. Full checks hash local contents only.
 
-Backup selected and Retrieve updates show an operation preview. Selecting differences and confirming uses the chosen direction's version, protects the replaced contents, and records a common version after verification. There is no separate baseline setup step. CLI users can save a preview with --prepare-upload or --direction Pull, then execute the reviewed report with backup/pull --selection. Unconfirmed differences are not forcibly overwritten.
+Upload selected and Download updates show an operation preview. Selecting differences and confirming uses the chosen direction's version, protects the replaced contents, and records a common version after verification. There is no separate baseline setup step. CLI users can save a preview with --prepare-upload or --direction Pull, then execute the reviewed report with backup/pull --selection. Unconfirmed differences are not forcibly overwritten.
 
 Changing the local folder only saves settings; it does not move or synchronize files and the folder need not exist yet. Complete one manual upload or pull to resume the existing automatic backup policy. Pull creates the local destination during execution when needed.
 
 Unfinished operations do not prevent saving settings or viewing a preview. Only overlapping file paths are deferred; other files in the same project can proceed. Use Recover unfinished transactions to recover using the original folder. Do not delete recovery evidence to dismiss the warning.
 
-Backup projects > Retrieve cloud project lets you choose a cloud project and this PC's folder, review and select files, then retrieve and add the mapping. Cancelling preview does not save a new mapping. An already joined project uses its existing local folder. Join cloud project only saves the mapping.
+Backup projects > Retrieve project lets you choose a cloud project and this PC's folder, review and select files, then retrieve and add the mapping. Cancelling preview does not save a new mapping. An already joined project uses its existing local folder. Join cloud only saves the mapping.
 
 Preview shows source, local destination, new/update counts and estimated business-content download size. Execution processes only checked items; later additions are excluded, and changed files or mappings are skipped for review. Local-only edits are preserved and deletions are not propagated. Missing local files with trusted cloud versions are restored. Configuration and recovery evidence remain after an interrupted retrieval.
 
@@ -80,13 +104,15 @@ Exclusion rules… in the preview shows the effective global and project rules a
 
 ## History and recovery
 
-The tray always keeps the blue anchor logo, with a bottom-right status badge: circular arrows for activity, an amber exclamation mark for attention, a red cross for failure, pause bars for paused automatic backups, and a dash while waiting for connection or network. No badge means idle and does not certify that every file is backed up. Hover for status and pending-file counts; open the main window for full details.
+The tray always keeps the blue anchor logo, with a bottom-right status badge: circular arrows for activity, an amber exclamation mark for attention, a red cross for failure or required repair, pause bars for paused automatic backups, and a dash while waiting for connection, network or automatic retry. No badge means idle and does not certify that every file is backed up. Hover for status and pending-file counts; open the main window for full details.
+
+Pressing ESC in the main window works like its top-right ×: the main window closes, the tray icon remains, and active tasks and scheduled backups continue. Reopen the main window from the tray. An open dialog handles ESC first. Use Exit application to end background operation.
 
 Drag the sidebar's right edge to change its width. A narrow sidebar shows navigation icons only, and its width is remembered when you exit.
 
 Only the previous ordinary version is retained after a successful commit. Unresolved conflicts and unfinished recovery evidence are excluded from cleanup. Online-only protection does not download copies; Keep local does. An independently running OneDrive desktop client may still download cloud folders under its own settings.
 
-Different cloud content is protected before the current local file is uploaded and verified. The live path can briefly be absent between protection and upload. Interrupted operations retain protected files and journals; use Recover unfinished transactions. Do not discard state or active protection folders.
+Different cloud content is protected before the current local file is uploaded and verified. The live path can briefly be absent between protection and upload. Interrupted operations retain protected files and journals; a verified original task can reconcile the archive and continue or restore the gap. Other cases use Recover unfinished transactions for review. Do not discard state or active protection folders.
 
 ## Upgrade
 
@@ -96,7 +122,7 @@ Old 0.8 numbered-version directories are preserved and are not automatically mig
 
 When the local file is missing, an interrupted pull that has not written or protected content can be selected for a new download directly in the pull preview. No separate recovery step is needed. Preview only shows the plan; execution rechecks current file evidence and the recovery record, retains the original record, and starts a fresh download. Changed files are skipped so you can preview their new state.
 
-Use Recover unfinished transactions or Back up now to manually retry an interrupted backup for the current project mapping. The application retains the exact original journal, reconciles uploads and archives, restores a cloud gap if needed, and preserves recovery materials. It then uploads the current local file, protecting different cloud contents before replacement and committing the common baseline only after verification. You can edit the local file after interruption; reverting to its old version is unnecessary. Another failure leaves a new recoverable journal. Automatic backups and readonly previews do not perform this explicit retry.
+Use Recover unfinished transactions to manually retry an interrupted backup for the current project mapping. The application retains the exact original journal, reconciles uploads and archives, restores a cloud gap if needed, and preserves recovery materials. It then uploads the current local file, protecting different cloud contents before replacement and committing the common baseline only after verification. You can edit the local file after interruption; reverting to its old version is unnecessary. Another failure leaves a new recoverable journal. Automatic network continuation retains the original authorization and does not acquire this manual current-local preference. When an old intent provably made no cloud business change and can be closed safely, an initialized project may instead make a new three-way decision under its current mode. Readonly previews never execute recovery.
 
 Retired mappings and other old-format transactions keep their existing recovery checks and are not interpreted as new uploads from the current mapping. Identifiable pending operations limit only affected files and do not block saving configuration. For unknown formats or missing original mappings, open item details; do not delete state to bypass checks.
 
@@ -104,6 +130,8 @@ The Project column lists the projects involved in a run, including the count and
 
 The installer contains a public application Client ID and the SDK-selected self-contained WinForms runtime (untrimmed, shared by Desktop and CLI in app; settings and state stay in data). Optional custom public IDs belong in Advanced settings; never enter a client secret. Credentials stay encrypted for the current Windows user and are not synchronized.
 
-CLI supports cloud-connect, cloud-bind, preview, backup, pull --destination <path>, recover, verify and devices. devices reads shared file metadata; verify hashes local files only. cloud-inspect / cloud-resolve support explicit conflict selection.
+CLI supports cloud-connect, cloud-bind, preview, backup, pull, recover, verify and devices. devices reads shared file metadata; verify hashes local files only. cloud-inspect / cloud-resolve support explicit conflict selection. Prefer `--project-id <id>` when selecting a project, including pull, cloud-inspect and cloud-resolve. `--destination <current relative path>` remains an entry-point convenience that resolves to a project ID before execution. The two options are mutually exclusive; an unknown project ID cannot fall back to an identically named folder.
+
+CLI `backup --automatic` uses the same safe continuation rules on its next invocation. It does not stay running to watch the network after the command exits; keep Desktop running in the background or use an existing schedule to invoke CLI again when automatic wake-up is needed.
 
 Real-service isolated-folder tests have passed. Physical two-device and production-upgrade acceptance should still start with a small project.

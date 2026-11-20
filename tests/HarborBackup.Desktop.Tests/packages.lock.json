@@ -171,8 +171,8 @@
       "harborbackup.desktop": {
         "type": "Project",
         "dependencies": {
-          "HarborBackup.Core": "[0.9.17, )",
-          "HarborBackup.Windows": "[0.9.17, )"
+          "HarborBackup.Core": "[0.9.21, )",
+          "HarborBackup.Windows": "[0.9.21, )"
         }
       },
       "harborbackup.onedrive": {
@@ -184,8 +184,8 @@
       "harborbackup.windows": {
         "type": "Project",
         "dependencies": {
-          "HarborBackup.Core": "[0.9.17, )",
-          "HarborBackup.OneDrive": "[0.9.17, )"
+          "HarborBackup.Core": "[0.9.21, )",
+          "HarborBackup.OneDrive": "[0.9.21, )"
         }
       }
     },

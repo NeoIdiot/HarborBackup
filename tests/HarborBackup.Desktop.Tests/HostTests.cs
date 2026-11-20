@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using HarborBackup.Core.Domain;
 using HarborBackup.Desktop;
 using HarborBackup.Desktop.Controllers;
@@ -167,6 +167,40 @@ public sealed class HostTests
                     await Task.Delay(100);
                     Assert.AreSame(originalWindow, context.Window);
                     Assert.IsTrue(context.Window.Visible);
+                    foreach (var (page, name) in new[] { ("概览", "Navigate概览"), ("备份项目", "ProjectGrid"), ("设置", "CloudRoot") })
+                    {
+                        await context.Window.NavigateAsync(page);
+                        var focused = context.Window.Controls.Find(name, true).Single();
+                        focused.Focus();
+                        var escape = Message.Create(focused.Handle, 0x0100, (IntPtr)Keys.Escape, IntPtr.Zero);
+                        Assert.IsTrue(focused.PreProcessMessage(ref escape), "ESC must reach the main window from " + name);
+                        Assert.IsFalse(context.Window.Visible);
+                        Assert.IsFalse(context.Window.IsDisposed);
+                        Assert.IsTrue(context.IconVisible);
+                        context.ShowStatus();
+                        Assert.AreSame(originalWindow, context.Window);
+                    }
+                    using (var details = new RunDetailsDialog([]))
+                    using (var dismiss = new System.Windows.Forms.Timer { Interval = 25 })
+                    {
+                        Exception? dialogError = null;
+                        dismiss.Tick += (_, _) =>
+                        {
+                            dismiss.Stop();
+                            try
+                            {
+                                var focused = details.Controls.Find("RunDetailsFilter", true).Single();
+                                focused.Focus();
+                                var escape = Message.Create(focused.Handle, 0x0100, (IntPtr)Keys.Escape, IntPtr.Zero);
+                                Assert.IsTrue(focused.PreProcessMessage(ref escape));
+                            }
+                            catch (Exception ex) { dialogError = ex; details.Close(); }
+                        };
+                        dismiss.Start(); details.ShowDialog(context.Window);
+                        if (dialogError is not null) throw dialogError;
+                        Assert.IsTrue(context.Window.Visible, "ESC in a dialog must leave its main window open.");
+                        Assert.IsTrue(context.IconVisible);
+                    }
                     var ticks = context.UiTicks;
                     await Task.Delay(1200);
                     Assert.IsGreaterThan(ticks, context.UiTicks);
@@ -205,6 +239,7 @@ public sealed class HostTests
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
+            Exception? failure = null;
             try
             {
                 UiText.SetLanguage(language);
@@ -245,19 +280,33 @@ public sealed class HostTests
                             File.WriteAllText(Path.Combine(folder, "navigation-performance-" + language + ".json"), System.Text.Json.JsonSerializer.Serialize(samples));
                         }
                         Assert.IsTrue(blockingTimes.All(ms => ms < 150), "Prepared pages must switch without a perceptible loading pause; inspect navigation-performance.json for individual timings.");
-                        completion.TrySetResult();
                     }
-                    catch (Exception ex) { completion.TrySetException(ex); }
-                    finally { form.ClosePermanently(); }
+                    catch (Exception ex) { failure = ex; }
+                    finally
+                    {
+                        try { form.ClosePermanently(); }
+                        catch (Exception ex)
+                        {
+                            failure = failure is null ? ex : new AggregateException(failure, ex);
+                            Application.ExitThread();
+                        }
+                    }
                 }
                 form.Shown += async (_, _) => await CheckAsync();
                 Application.Run(form);
             }
-            catch (Exception ex) { completion.TrySetException(ex); }
+            catch (Exception ex) { failure = failure is null ? ex : new AggregateException(failure, ex); }
+            finally
+            {
+                // Publish the result after the message loop and form disposal have finished.
+                // The next language case must not touch controls still being torn down.
+                if (failure is null) completion.TrySetResult();
+                else completion.TrySetException(failure);
+            }
         }) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(60));
-        Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(5)));
+        try { await completion.Task.WaitAsync(TimeSpan.FromSeconds(60)); }
+        finally { Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(5)), "The navigation test UI thread must exit before the next case starts."); }
     }
 
     [TestMethod]
@@ -354,7 +403,7 @@ public sealed class HostTests
                         Assert.AreEqual(47, input.Value);
                         Assert.IsTrue(settings.Dirty, "Language changes must keep the unsaved draft.");
                         Assert.AreEqual(english ? "Settings" : "设置", form.Controls.Find("Navigate设置", true).Single().Text);
-                        Assert.AreEqual(english ? "Back up now" : "立即备份", form.Controls.Find("立即备份", true).Single().Text);
+                        Assert.AreEqual(english ? "Run now" : "立即运行", form.Controls.Find("立即运行", true).Single().Text);
                         if (english)
                         {
                             // Exercise the real timer past its five-second configuration poll.
@@ -386,7 +435,7 @@ public sealed class HostTests
                             await form.NavigateAsync("设置");
                             form.PerformLayout(); settings.PerformLayout();
                             var header = form.Controls.Find("PageHeader", true).Single();
-                            foreach (var name in new[] { "立即备份", "暂停自动备份", "停止当前操作" })
+                            foreach (var name in new[] { "立即运行", "暂停自动备份", "停止当前操作" })
                             {
                                 var button = form.Controls.Find(name, true).Single();
                                 if (!button.Visible) continue;
@@ -555,10 +604,10 @@ public sealed class HostTests
                             editor.Show(form);
                             ((TextBox)editor.Controls.Find("Destination", true).Single()).Text = "项目/Settings";
                             Assert.AreEqual("项目/Settings", editor.Controls.Find("Destination", true).Single().Text);
-                            Assert.AreEqual("OneDrive/项目/Settings", editor.Controls.Find("ResolvedTarget", true).Single().Text);
+                            Assert.IsEmpty(editor.Controls.Find("ResolvedTarget", true));
                             Capture(editor, (english ? "en" : "zh") + "-editor"); editor.Close();
                         }
-                        using (var picker = new CloudTargetDialog(_ => Task.FromResult(new HarborBackup.Windows.Integration.CloudFolderListing(
+                        using (var picker = new CloudTargetDialog((_, _, _) => Task.FromResult(new HarborBackup.Windows.Integration.CloudFolderListing(
                             new("drive-root", "OneDrive", "root", 0, true),
                             [new("projects", "Projects", "tag", 0, true)]))))
                         {
@@ -590,7 +639,7 @@ public sealed class HostTests
                         var conflictVersion = new FileVersion(new string('a',64),100,DateTimeOffset.UtcNow,DateTimeOffset.UtcNow);
                         using (var conflictDialog = new CloudConflictDialog(new("Projects/Demo","docs/example.txt",conflictVersion,
                             [new(1,Guid.NewGuid().ToString("N"),new string('b',64),"docs/example.txt",new string('c',64),[],
-                                "item","etag",conflictVersion,DateTimeOffset.UtcNow)],"confirmation")))
+                                "item","etag",conflictVersion,DateTimeOffset.UtcNow)],"confirmation") { ProjectId = DeviceIdentity.Digest("demo") }))
                         {
                             conflictDialog.Show(form); Capture(conflictDialog, (english ? "en" : "zh") + "-conflict"); conflictDialog.Close();
                         }
@@ -599,8 +648,8 @@ public sealed class HostTests
                         var safe = new FileDecision(FileAction.Copy, false, FileSide.Source, FileSide.None, ProtectionKind.None, "TargetOnly");
                         var deferred = new FileDecision(FileAction.Deferred, true, FileSide.None, FileSide.None, ProtectionKind.None, "CloudMetadataRequired");
                         var pullReport = new PreviewReport([new("Projects/Demo",
-                            [new("first.txt",safe,true,false),new("second.txt",safe,true,false),new("unknown.txt",deferred,true,false)],[],new())])
-                        { PullSelection = new("Projects/Demo",false,[new("first.txt","first-token",true,100),new("second.txt","second-token",true,200)]) };
+                            [new("first.txt",safe,true,false),new("second.txt",safe,true,false),new("unknown.txt",deferred,true,false)],[],new()) { ProjectId = DeviceIdentity.Digest("demo") }])
+                        { PullSelection = new("Projects/Demo",false,[new("first.txt","first-token",true,100),new("second.txt","second-token",true,200)]) { ProjectId = DeviceIdentity.Digest("demo") } };
                         using (var preview = new PreviewDialog(pullReport,true,ws.Source,"OneDrive/Projects/Demo"))
                         {
                             preview.Show(form);
@@ -667,7 +716,7 @@ public sealed class HostTests
                         await controller.RefreshAsync();
                         Assert.AreEqual(!damaged, controller.State.NeedsSetup);
                         Assert.AreEqual(!damaged, form.Controls.Find("WelcomePanel", true).Single().Visible);
-                        Assert.IsFalse(((Button)form.Controls.Find("立即备份", true).Single()).Enabled);
+                        Assert.IsFalse(((Button)form.Controls.Find("立即运行", true).Single()).Enabled);
                         Assert.HasCount(damaged ? 1 : 0, controller.State.Details);
                         var screenshotDirectory = Environment.GetEnvironmentVariable("HARBORBACKUP_SCREENSHOT_DIR");
                         if (screenshotDirectory is not null)

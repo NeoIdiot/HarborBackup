@@ -18,8 +18,8 @@ internal sealed class ProjectEditorDialog : Form
     private readonly TextBox destination = AppStyle.Text();
     private readonly TextBox directories = AppStyle.Lines();
     private readonly TextBox files = AppStyle.Lines();
+    private readonly ComboBox automaticMode = new() { Name = "AutomaticBackupMode", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top };
     private readonly Dictionary<string, CheckBox> presetChoices = [];
-    private readonly TextBox resolved = new() { Name = "ResolvedTarget", ReadOnly = true, Dock = DockStyle.Top, BorderStyle = BorderStyle.FixedSingle };
     private readonly Label feedback = AppStyle.Label("修改仅保存在草稿中。", 65);
     private readonly FlowLayoutPanel actions;
     private bool busy;
@@ -33,7 +33,6 @@ internal sealed class ProjectEditorDialog : Form
     private CancellationTokenSource? previewCancellation;
     private bool closeAfterCancel;
     private string? cloudFolderId;
-    private readonly string? cloud;
     private readonly string newProjectId = HarborBackup.Windows.Integration.DeviceIdentity.Digest(Guid.NewGuid().ToString("N"));
 
     public ProjectEditorDialog(IConfigurationPresenter presenter, ConfigurationDraft draft, int? index, string? cloud, bool global = false)
@@ -41,10 +40,9 @@ internal sealed class ProjectEditorDialog : Form
         this.presenter = presenter;
         this.draft = draft.Copy();
         this.index = index;
-        this.cloud = cloud;
         this.global = global;
         source.Name = "SourcePath";
-        source.AccessibleName = UiText.Text("本地源目录");
+        source.AccessibleName = UiText.Text("本地目录");
         destination.Name = "Destination";
         destination.AccessibleName = UiText.Text("目标相对路径");
         directories.Name = "ExcludedDirectories"; files.Name = "ExcludedFiles";
@@ -74,6 +72,7 @@ internal sealed class ProjectEditorDialog : Form
         cloudFolderId = record["cloudFolderId"]?.GetValue<string>();
         directories.Text = ReadLines(record["excludedDirectories"]);
         files.Text = ReadLines(record["excludedFiles"]);
+        var initialMode = ReadAutomaticMode(record);
         var selectedPresets = ExclusionPresets.Resolve(ReadLines(this.draft.Projects["builtInExclusions"])
             .Split([ '\r', '\n' ], StringSplitOptions.RemoveEmptyEntries));
         if (global)
@@ -104,22 +103,21 @@ internal sealed class ProjectEditorDialog : Form
             var sourceBrowse = AppStyle.Button("浏览…", (_, _) =>
             { using var picker = new FolderBrowserDialog(); if (picker.ShowDialog(this) == DialogResult.OK) source.Text = picker.SelectedPath; });
             var sourceRow = PathPickerRow(source, sourceBrowse);
-            sourceCard.Controls.Add(sourceRow); sourceCard.Controls.Add(AppStyle.Label("本地源目录", 30)); Add(sourceCard);
+            sourceCard.Controls.Add(sourceRow); sourceCard.Controls.Add(AppStyle.Label("本地目录", 30)); Add(sourceCard);
             source.PlaceholderText = UiText.Text("选择文件夹，或输入包含环境变量的路径");
             var targetCard = new SurfacePanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(16, 10, 16, 14) };
-            var targetRows = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty };
+            var targetRows = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
             targetRows.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            for (var row = 0; row < 4; row++) targetRows.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            resolved.AccessibleName = UiText.Text("实际目标");
-            targetRows.Controls.Add(AppStyle.Label("云端目标目录（相对 OneDrive 根目录）", 30));
+            for (var row = 0; row < 2; row++) targetRows.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            targetRows.Controls.Add(AppStyle.Label("云端目录（相对 OneDrive 根目录）", 30));
             var targetBrowse = AppStyle.Button("浏览云端…", (_, _) =>
             {
-                using var picker = new CloudTargetDialog(presenter.BrowseCloudAsync);
+                using var picker = new CloudTargetDialog(presenter.BrowseCloudAsync, presenter.PrefetchCloudAsync,
+                    cloudFolderId, destination.Text);
                 if (picker.ShowDialog(this) == DialogResult.OK) { destination.Text = picker.Destination; cloudFolderId = picker.FolderId; }
             });
             var targetInput = PathPickerRow(destination, targetBrowse);
             targetRows.Controls.Add(targetInput);
-            targetRows.Controls.Add(AppStyle.Label("实际目标", 30)); var resolvedInput = AppStyle.Input(resolved); resolvedInput.Dock = DockStyle.Top; targetRows.Controls.Add(resolvedInput);
             foreach (Control control in targetRows.Controls) control.Margin = Padding.Empty;
             targetCard.Controls.Add(targetRows); Add(targetCard);
             var aligningBrowseButtons = false;
@@ -153,6 +151,42 @@ internal sealed class ProjectEditorDialog : Form
             Shown += (_, _) => AlignBrowseButtons();
             AlignBrowseButtons();
             destination.PlaceholderText = UiText.Text("例如 Projects/MyProject");
+            var automaticCard = new SurfacePanel { Name = "AutomaticBackupOptions", Dock = DockStyle.Top,
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(16, 10, 16, 14) };
+            var automaticHint = new Label { Name = "AutomaticBackupModeHint", Dock = DockStyle.Top, AutoSize = true,
+                ForeColor = AppStyle.Muted, Padding = new Padding(0, 8, 0, 0) };
+            var automaticRules = new Label { Name = "AutomaticBackupRules", Dock = DockStyle.Top, AutoSize = true,
+                ForeColor = AppStyle.Muted, Padding = new Padding(0, 4, 0, 0) };
+            UiText.Set(automaticRules, "删除不联动；冲突需确认。");
+            void UpdateAutomaticHint() => UiText.Set(automaticHint, automaticMode.SelectedIndex switch
+            {
+                1 => "自动上传本地更新、下载云端更新。",
+                2 => "下载云端更新，不上传本地业务文件。",
+                _ => "仅将本地更新上传到 OneDrive。"
+            });
+            automaticMode.SelectedIndexChanged += (_, _) => UpdateAutomaticHint();
+            UiText.Watch(automaticMode, () =>
+            {
+                var selected = automaticMode.SelectedIndex < 0 ? (int)initialMode : automaticMode.SelectedIndex;
+                automaticMode.BeginUpdate();
+                try
+                {
+                    automaticMode.Items.Clear();
+                    automaticMode.Items.AddRange([UiText.Text("仅上传"), UiText.Text("双向备份"), UiText.Text("仅下载")]);
+                    automaticMode.SelectedIndex = selected;
+                    automaticMode.AccessibleName = UiText.Text("自动备份模式");
+                }
+                finally { automaticMode.EndUpdate(); }
+            });
+            automaticCard.SizeChanged += (_, _) =>
+            {
+                var width = Math.Max(100, automaticCard.ClientSize.Width - automaticCard.Padding.Horizontal);
+                automaticHint.MaximumSize = automaticRules.MaximumSize = new Size(width, 0);
+            };
+            automaticCard.Controls.Add(automaticRules); automaticCard.Controls.Add(automaticHint);
+            var automaticInput = AppStyle.Input(automaticMode); automaticInput.Dock = DockStyle.Top;
+            automaticCard.Controls.Add(automaticInput);
+            automaticCard.Controls.Add(AppStyle.Label("自动备份模式", 30)); Add(automaticCard);
         }
         var exclusions = new SurfacePanel { Dock = DockStyle.Top, Height = 218, Padding = new Padding(16, 10, 16, 12) };
         var ruleColumns = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
@@ -174,7 +208,7 @@ internal sealed class ProjectEditorDialog : Form
         }
         feedback.Dock = DockStyle.Bottom;
         feedback.AutoSize = true; feedback.Dock = DockStyle.Top; feedback.Padding = new Padding(0, 10, 0, 10);
-        UiText.Set(feedback, global ? "排除规则将在下次扫描时生效，不删除已有文件，也不重置备份状态。" : "保存仅更新配置。切换目录后，请先上传或拉取，再继续自动备份。");
+        UiText.Set(feedback, global ? "排除规则将在下次扫描时生效，不删除已有文件，也不重置备份状态。" : "保存仅更新配置。");
         cancel = AppStyle.Button("取消", (_, _) => { if (busy) StopPreview(false); else Close(); });
         cancel.Name = "CancelDraftOperation";
         actions = AppStyle.DialogActions(AppStyle.Button("检查配置", async (_, _) => await PerformAsync(false, false)),
@@ -191,8 +225,7 @@ internal sealed class ProjectEditorDialog : Form
         Disposed += (_, _) => { progressTimer.Dispose(); previewCancellation?.Cancel(); };
         Controls.Add(scroll);
         Controls.Add(footer);
-        destination.TextChanged += (_, _) => { cloudFolderId = null; UpdateResolved(); };
-        UpdateResolved();
+        destination.TextChanged += (_, _) => cloudFolderId = null;
         FormClosing += (_, e) => { if (busy) { e.Cancel = true; StopPreview(true); } };
         Shown += (_, _) => { if (!global && !source.IsDisposed) source.Focus(); };
         ResumeLayout(true);
@@ -228,6 +261,8 @@ internal sealed class ProjectEditorDialog : Form
         {
             record["source"] = source.Text.Trim();
             record["destination"] = destination.Text.Trim();
+            record["automaticBackupMode"] = automaticMode.SelectedIndex switch { 1 => "bidirectional", 2 => "download", _ => "upload" };
+            record.Remove("automaticBidirectional");
             if (cloudFolderId is null) record.Remove("cloudFolderId"); else record["cloudFolderId"] = cloudFolderId;
             if (index is null) { record["id"] = newProjectId; folders.Add(record); }
         }
@@ -237,14 +272,19 @@ internal sealed class ProjectEditorDialog : Form
             .Select(p => (JsonNode?)JsonValue.Create(p.Key)).ToArray());
         return candidate;
     }
-    private void UpdateResolved()
+    private static AutomaticBackupMode ReadAutomaticMode(JsonObject record)
     {
-        try
+        if (record.ContainsKey("automaticBackupMode"))
         {
-            var relative = HarborBackup.Windows.FileSystem.PathRules.Relative(destination.Text.Trim(), true);
-            resolved.Text = cloud is null ? UiText.Text("请先在设置中选择 OneDrive 根目录") : cloud.StartsWith("OneDrive/", StringComparison.Ordinal) ? CloudAccountPresentation.Path(relative) : Path.GetFullPath(Path.Combine(cloud, relative));
+            return record["automaticBackupMode"]?.GetValue<string>() switch
+            {
+                "upload" => AutomaticBackupMode.UploadOnly,
+                "bidirectional" => AutomaticBackupMode.Bidirectional,
+                "download" => AutomaticBackupMode.DownloadOnly,
+                _ => throw new FormatException("automaticBackupMode must be upload, bidirectional or download.")
+            };
         }
-        catch { resolved.Text = UiText.Text("请输入有效的目标相对路径"); }
+        return record["automaticBidirectional"]?.GetValue<bool>() == true ? AutomaticBackupMode.Bidirectional : AutomaticBackupMode.UploadOnly;
     }
     private void StopPreview(bool close)
     {
@@ -325,10 +365,10 @@ internal sealed class ProjectEditorDialog : Form
             }
             if (preview)
             {
-                var name = global ? null : snapshot.Projects[index ?? (snapshot.Projects.Count - 1)].Destination;
+                var projectId = global ? null : snapshot.Projects[index ?? (snapshot.Projects.Count - 1)].ProjectId;
                 previewCancellation!.Token.ThrowIfCancellationRequested();
                 UpdatePreviewFeedback();
-                var report = await presenter.PreviewAsync(candidate, name, previewCancellation.Token, progress);
+                var report = await presenter.PreviewAsync(candidate, projectId, previewCancellation.Token, progress);
                 previewCancellation.Token.ThrowIfCancellationRequested();
                 progressTimer.Stop(); elapsed.Stop(); activity.Visible = false;
                 UiText.Set(feedback, "预览已完成，草稿尚未保存。");
