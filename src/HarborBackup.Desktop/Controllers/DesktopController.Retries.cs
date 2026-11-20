@@ -12,7 +12,7 @@ internal sealed partial class DesktopController
     private long? connectedAt;
 
     private bool CanDispatchScheduled => !stopping && !Busy && !coordinator.Paused && !networkOffline &&
-        config is { Projects.Count: > 0 } && CloudAccount.Enabled && !CloudAccount.RequiresAuthorization &&
+        config is not null && config.Projects.Any(p => !config.IsProjectPaused(p.ProjectId)) && CloudAccount.Enabled && !CloudAccount.RequiresAuthorization &&
         (connectedAt is null || clock.GetElapsedTime(connectedAt.Value) >= TimeSpan.FromSeconds(2));
 
     private DateTimeOffset? NextWorkDueUtc => new[] { schedule?.NextDueUtc, recoveryRetries.NextDueUtc }.Min();
@@ -33,7 +33,7 @@ internal sealed partial class DesktopController
 
     private void SynchronizeRetries(IReadOnlyList<CloudAutomaticRetryCandidate> candidates)
     {
-        var current = candidates.Where(c => RetryKey(c.ProjectId)?.Binding == c.Binding)
+        var current = candidates.Where(c => config?.IsProjectPaused(c.ProjectId) == false && RetryKey(c.ProjectId)?.Binding == c.Binding)
             .Select(c => new RecoveryRetryCandidate(new(c.ProjectId, c.Binding), c.RetryNotBeforeUtc));
         recoveryRetries.Synchronize(current);
     }

@@ -174,6 +174,37 @@ public sealed class AutomaticBidirectionalUiTests
                         }
                         form.Size = form.MinimumSize; form.PerformLayout(); Application.DoEvents();
                         Capture(form, "automatic-project-list-" + language);
+                        grid.CurrentCell = grid.Rows.Cast<DataGridViewRow>().Single(r => ((ProjectRow)r.DataBoundItem!).ProjectId == enabledId).Cells[0];
+                        var pause = (Button)form.Controls.Find("PauseSelectedProject", true).Single();
+                        Assert.IsTrue(pause.Enabled);
+                        Assert.AreEqual(UiText.Text("暂停选中备份"), pause.Text);
+                        foreach (var paused in new[] { true, false })
+                        {
+                            pause.PerformClick();
+                            var deadline = DateTime.UtcNow.AddSeconds(10);
+                            while (controller.State.Configuration!.IsProjectPaused(enabledId) != paused || controller.Busy)
+                            {
+                                if (DateTime.UtcNow >= deadline) Assert.Fail("Project pause did not finish saving.");
+                                await Task.Delay(20);
+                            }
+                            Assert.AreEqual(paused, ws.Load().IsProjectPaused(enabledId));
+                            Assert.IsFalse(ws.Load().IsProjectPaused(uploadId));
+                            Assert.AreEqual(UiText.Text(paused ? "恢复选中备份" : "暂停选中备份"), pause.Text);
+                            Assert.AreEqual(UiText.Text(paused ? "项目备份已暂停" : "双向备份"),
+                                controller.State.Projects.Single(r => r.ProjectId == enabledId).DisplayAutomaticMode);
+                            Application.DoEvents();
+                            var available = pause.ClientSize.Width - pause.Padding.Horizontal;
+                            Assert.IsLessThanOrEqualTo(available, TextRenderer.MeasureText(pause.Text, pause.Font).Width,
+                                "The project pause caption must fit at minimum window size.");
+                            Capture(form, $"project-pause-{paused}-{language}");
+                        }
+                        var restarted = new DesktopController(Paths(ws));
+                        await restarted.RefreshAsync();
+                        Assert.IsFalse(restarted.State.Projects.Single(r => r.ProjectId == enabledId).BackupPaused);
+                        grid.DataSource = ProjectListPresentation.Merge(controller.State.Projects,
+                            [new("Projects/Remote", "remote-folder", DeviceIdentity.Digest("remote"))]);
+                        grid.CurrentCell = grid.Rows.Cast<DataGridViewRow>().Single(r => !((ProjectRow)r.DataBoundItem!).IsLocal).Cells[0];
+                        Assert.IsFalse(pause.Enabled, "Cloud-only projects have no local pause policy.");
                     }
                     catch (Exception ex) { failure = ex; }
                     finally

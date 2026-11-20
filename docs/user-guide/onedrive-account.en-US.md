@@ -24,7 +24,7 @@ Add a project, choose its Local folder, then use Browse cloud or enter a Cloud f
 
 Browse cloud opens the project's recorded cloud folder when its ID is known. It briefly caches folder listings and preloads some child-folder listings after displaying the current folder. Going up or reopening the picker can reuse unexpired listings, reducing repeated waits. Use Refresh to see folders recently created, renamed or moved on another device. A failed refresh preserves the previous listing and current location. Closing the picker cancels unfinished reads. Browsing and selecting folders do not upload or download project files.
 
-Another device can connect the same management folder and Join cloud project with its own local source. Project targets must not overlap management storage or other targets. Existing nonempty project folders are allowed; files without trusted metadata are preserved for review.
+Another device can connect the same management folder and Join cloud with its own local source. Project targets must not overlap management storage or other targets. Existing nonempty project folders are allowed; files without trusted metadata are preserved for review.
 
 ## Comparison and transfer
 
@@ -78,6 +78,8 @@ Add project / Edit project offers an Automatic backup mode selector:
 
 The project list shows the selected mode. This setting is local to each device; choose it separately on other PCs. Scheduled runs, Run now in the window or tray, and CLI `backup --automatic` follow each project's mode and use the global pause control, speed limits and automatic budgets. Run now retains the initial manual-operation requirement and is unavailable while automatic backup is paused. Explicit Upload selected and Download updates keep their stated directions and remain available during that pause; automatic budgets do not limit these manual operations.
 
+On Backup projects, select a local project and click Pause project to suspend its future automatic runs and automatic retries. The button becomes Resume project and the mode column shows Paused. The setting survives restart and other projects continue normally. Manual upload, download and preview remain available. This button is unavailable during an operation; use Stop current operation to stop running work. Resuming a project still respects the global pause.
+
 Download only does not upload local business files to the project's cloud folder. It may still upload management metadata and copies that protect different local contents before replacement. All modes retain both sides' extra files and never propagate deletions.
 
 Two-way backup chooses a direction from the common baseline rather than modification times. A file missing on one side is copied from the other when the selected mode permits that direction and trusted content evidence permits the transfer. Different changes on both sides, or unequal contents without a common baseline, retain conflict protection and require an explicit choice. Cloud files without sufficient evidence are not downloaded automatically. Comparison never downloads business contents; a selected download follows Pull's cloud-version checks, fresh local-content checks, protection and verified baseline commit. Deletions are not propagated, so a file deleted on one side may be restored by a later automatic run.
@@ -92,7 +94,7 @@ Changing the local folder only saves settings; it does not move or synchronize f
 
 Unfinished operations do not prevent saving settings or viewing a preview. Only overlapping file paths are deferred; other files in the same project can proceed. Use Recover unfinished transactions to recover using the original folder. Do not delete recovery evidence to dismiss the warning.
 
-Backup projects > Retrieve cloud project lets you choose a cloud project and this PC's folder, review and select files, then retrieve and add the mapping. Cancelling preview does not save a new mapping. An already joined project uses its existing local folder. Join cloud project only saves the mapping.
+Backup projects > Retrieve project lets you choose a cloud project and this PC's folder, review and select files, then retrieve and add the mapping. Cancelling preview does not save a new mapping. An already joined project uses its existing local folder. Join cloud only saves the mapping.
 
 Preview shows source, local destination, new/update counts and estimated business-content download size. Execution processes only checked items; later additions are excluded, and changed files or mappings are skipped for review. Local-only edits are preserved and deletions are not propagated. Missing local files with trusted cloud versions are restored. Configuration and recovery evidence remain after an interrupted retrieval.
 

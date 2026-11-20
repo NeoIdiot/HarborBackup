@@ -120,6 +120,9 @@ internal sealed partial class MainForm
         var ready = !controller.Busy && catalogCancellation is null;
         var local = projectGrid.CurrentRow?.DataBoundItem is ProjectRow { IsLocal: true };
         foreach (var button in localSelectionButtons) button.Enabled = !controller.Busy && local && controller.State.Configuration is not null;
+        pauseProject.Enabled = !controller.Busy && local && controller.State.Configuration is not null;
+        UiText.Set(pauseProject, projectGrid.CurrentRow?.DataBoundItem is ProjectRow { BackupPaused: true }
+            ? "恢复选中备份" : "暂停选中备份");
         projectMore.Enabled = !controller.Busy && projectGrid.CurrentRow?.DataBoundItem is ProjectRow;
         foreach (ToolStripItem item in projectMore.ContextMenuStrip!.Items)
             if (item is ToolStripMenuItem) item.Enabled = !controller.Busy && (item.Name == "RemoveProject" || local);

@@ -144,7 +144,7 @@ internal sealed partial class DesktopController(RuntimePaths paths,
                 { "Success" => "云端操作已完成", "Warning" => "有待处理问题", "BudgetLimited" => "预算已用完，下轮继续", "OfflineInterrupted" => "上次运行因断网中断",
                     "WaitingForRetry" => "等待自动重试", "AwaitingConfirmation" => "需要确认版本", "RepairRequired" => "需要修复后重试",
                     "Failed" => "失败", "Cancelled" or "Stopped" => "已停止", _ => "尚未运行" }, LocalStatus: loaded.LocalStatuses[index], CloudFolderId: p.CloudFolderId, ProjectId: p.ProjectId)
-                { Health = loaded.Health[index], AutomaticMode = config.GetAutomaticBackupMode(p.ProjectId),
+                { BackupPaused = config.IsProjectPaused(p.ProjectId), Health = loaded.Health[index], AutomaticMode = config.GetAutomaticBackupMode(p.ProjectId),
                     NeedsInitialization = loaded.LocalStatuses[index] == "待首次上传或拉取", Recovery = loaded.Recoveries[index] };
             }).ToArray();
             if (!projects.SequenceEqual(refreshedProjects)) projects = refreshedProjects;
@@ -211,6 +211,9 @@ internal sealed partial class DesktopController(RuntimePaths paths,
     {
         if (Busy || stopping) return null;
         automatic |= command == DesktopCommand.RunConfigured;
+        if (automatic && config is not null && (destination is null
+            ? !config.Projects.Any(p => !config.IsProjectPaused(p.ProjectId))
+            : config.IsProjectPaused(destination))) return null;
         object? result = null;
         var updates = new ProgressMailbox();
         using var progressTimer = new System.Windows.Forms.Timer { Interval = 150 };

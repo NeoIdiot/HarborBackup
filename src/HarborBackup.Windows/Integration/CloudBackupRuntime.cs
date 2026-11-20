@@ -104,6 +104,12 @@ public sealed class CloudBackupRuntime(ConfigurationSnapshot config, Func<ICloud
             return new(mode, started, DateTimeOffset.UtcNow, selectedProjects.Select(p => new ProjectRun(p.Destination,
                 [], [new("AutomaticBackupPaused", "后续自动备份已暂停", false)], new()) { ProjectId = p.ProjectId, CoverageComplete = false }).ToArray())
                 { CloudUploadStatus = "Paused" };
+        if (automatic)
+        {
+            selectedProjects = selectedProjects.Where(p => !config.IsProjectPaused(p.ProjectId)).ToArray();
+            if (selectedProjects.Count == 0)
+                return new(mode, started, DateTimeOffset.UtcNow, []) { CloudUploadStatus = "Paused" };
+        }
         using var drive = Open();
         if (automatic && drive is GraphDrive graph) graph.YieldLongRetryWaits = true;
         foreach (var project in selectedProjects)

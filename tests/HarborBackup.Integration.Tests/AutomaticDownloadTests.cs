@@ -12,6 +12,41 @@ namespace HarborBackup.Windows.Tests;
 [DoNotParallelize]
 public sealed class AutomaticDownloadTests
 {
+    [TestMethod]
+    public async Task PausedProjectIsSkippedWhileOtherProjectsRunAndManualUploadRemainsAvailable()
+    {
+        using var f = new Fixture(); var a = f.Device("A");
+        var other = a.P with { Source = Path.Combine(f.Root, "A", "other"), Destination = "Other", TaskId = DeviceIdentity.Digest("other-project") };
+        var config = a.C with { Projects = [a.P, other] };
+        Write(a.P, "file.txt", "base"); Write(other, "other.txt", "base");
+        await new CloudBackupRuntime(config, () => f.Drive, 1).ExecuteAsync(SyncDirection.Backup, null, false, false, null, default);
+        var paused = config with { PausedProjects = new HashSet<string> { a.P.ProjectId } };
+        Write(a.P, "file.txt", "paused update"); Write(other, "other.txt", "active update");
+        var report = await Run(f, paused);
+        Assert.AreEqual(0, report.ExitCode, JsonSerializer.Serialize(report));
+        Assert.AreEqual(other.ProjectId, report.Projects.Single().ProjectId);
+        var root = (await f.Drive.FindAsync("drive-root", "Documents", default))!;
+        var file = (await f.Drive.FindAsync(root.Id, "file.txt", default))!;
+        Assert.AreEqual("base", Encoding.UTF8.GetString(f.Drive.Items[file.Id].Bytes));
+        var allPaused = paused with { PausedProjects = new HashSet<string> { a.P.ProjectId, other.ProjectId } };
+        foreach (var retryOnly in new[] { false, true })
+        {
+            var skipped = await new CloudBackupRuntime(allPaused, () => throw new AssertFailedException("Paused work must not open the cloud."))
+                .ExecuteAsync(SyncDirection.Backup, a.P.ProjectId, false, false, null, default, automatic: true, retryOnly: retryOnly);
+            Assert.HasCount(0, skipped.Projects);
+            Assert.AreEqual("Paused", skipped.CloudUploadStatus);
+        }
+        var manual = await new CloudBackupRuntime(paused, () => f.Drive, 1)
+            .ExecuteAsync(SyncDirection.Backup, a.P.ProjectId, false, false, null, default);
+        Assert.AreEqual(0, manual.ExitCode, JsonSerializer.Serialize(manual));
+        Write(a.P, "file.txt", "resumed update");
+        var resumed = await Run(f, config);
+        Assert.AreEqual(0, resumed.ExitCode, JsonSerializer.Serialize(resumed));
+        Assert.HasCount(2, resumed.Projects);
+        file = (await f.Drive.FindAsync(root.Id, "file.txt", default))!;
+        Assert.AreEqual("resumed update", Encoding.UTF8.GetString(f.Drive.Items[file.Id].Bytes));
+    }
+
     private static ConfigurationSnapshot Download(ConfigurationSnapshot config, string id) => config with
     {
         AutomaticBackupModes = new Dictionary<string, AutomaticBackupMode> { [id] = AutomaticBackupMode.DownloadOnly }

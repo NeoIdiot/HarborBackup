@@ -12,6 +12,47 @@ public sealed class AutomaticBackupConfigurationTests
         Path.Combine(ws.Config, "backup-settings.json")), ws.Device, Path.Combine(ws.Root, "desktop"));
 
     [TestMethod]
+    public void ProjectPausePersistsWithoutChangingMappingOrRecoveryEvidence()
+    {
+        using var ws = new TestWorkspace();
+        var editor = Editor(ws);
+        editor.Save(editor.Load(), ConfigurationPart.Projects);
+        var before = ws.Load(); var project = before.Projects.Single();
+        Assert.IsFalse(before.IsProjectPaused(project.ProjectId));
+        CloudMapping.MarkReady(project, before);
+        var mapping = CloudMapping.Capture(project, before);
+        ws.Write(CloudMapping.StateRoot(project, before), "baselines.json", "retained evidence");
+        var state = Directory.GetFiles(ws.State, "*", SearchOption.AllDirectories).ToDictionary(p => p, File.ReadAllBytes);
+        foreach (var paused in new[] { true, false, true })
+        {
+            var draft = editor.Load();
+            draft.Projects["folders"]![0]!["backupPaused"] = paused;
+            editor.Save(draft, ConfigurationPart.Projects);
+            var after = ws.Load(); var next = after.Projects.Single();
+            Assert.AreEqual(paused, after.IsProjectPaused(next.ProjectId));
+            Assert.AreEqual(mapping.Signature, CloudMapping.Capture(next, after).Signature);
+            Assert.AreEqual(mapping.Binding, CloudMapping.Bind(next, after));
+            Assert.IsFalse(CloudMapping.NeedsFirstOperation(next, after));
+            Assert.HasCount(before.RetiredMappings.Count, after.RetiredMappings);
+            CollectionAssert.AreEquivalent(state.Keys.ToArray(), Directory.GetFiles(ws.State, "*", SearchOption.AllDirectories));
+            foreach (var pair in state) CollectionAssert.AreEqual(pair.Value, File.ReadAllBytes(pair.Key));
+        }
+    }
+
+    [TestMethod]
+    [DataRow("null")]
+    [DataRow("1")]
+    [DataRow("\"true\"")]
+    public void InvalidProjectPauseIsRejected(string json)
+    {
+        using var ws = new TestWorkspace();
+        var draft = Editor(ws).Load();
+        draft.Projects["folders"]![0]!["backupPaused"] = JsonNode.Parse(json);
+        File.WriteAllText(Path.Combine(ws.Config, "projects.json"), draft.Projects.ToJsonString());
+        Assert.ThrowsExactly<FormatException>(() => ws.Load());
+    }
+
+    [TestMethod]
     public void AutomaticModeDefaultsToUploadAndReadsLegacyPolicyPerProject()
     {
         using var ws = new TestWorkspace();

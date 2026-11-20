@@ -737,7 +737,7 @@ Closing the window leaves the tray running. Exiting stops this device&apos;s sch
   <data name="云端版本"><value>Cloud version</value></data>
   <data name="确认选择"><value>Confirm selection</value></data>
   <data name="云端版本记录"><value>Cloud revision records</value></data>
-  <data name="加入云端项目"><value>Join cloud project</value></data>
+  <data name="加入云端项目"><value>Join cloud</value></data>
   <data name="ConcurrentCloudVersions"><value>Concurrent cloud versions</value></data>
   <data name="NoCommonCloudBaseline"><value>No common cloud baseline</value></data>
   <data name="云端子目录" xml:space="preserve"><value>Cloud subfolders</value></data>
@@ -829,7 +829,7 @@ Files are rechecked before execution and archived before replacement.</value>
   <data name="Cloud target overlaps HarborBackup management storage." xml:space="preserve"><value>Backup target must not overlap HarborBackup management storage.</value></data>
   <data name="Cloud target changed concurrently. Both versions are preserved; inspect the conflict before retrying." xml:space="preserve"><value>Cloud file changed concurrently. Both versions were preserved; review the conflict before retrying.</value></data>
   <data name="正在读取云端元数据" xml:space="preserve"><value>Reading cloud metadata</value></data>
-  <data name="取回云端项目…" xml:space="preserve"><value>Retrieve cloud project…</value></data>
+  <data name="取回云端项目…" xml:space="preserve"><value>Retrieve project…</value></data>
   <data name="取回并建立基线…" xml:space="preserve"><value>Retrieve and establish baseline…</value></data>
   <data name="取回并建立基线" xml:space="preserve"><value>Retrieve and establish baseline</value></data>
   <data name="取回所选并建立基线" xml:space="preserve"><value>Retrieve selected and establish baseline</value></data>
@@ -868,7 +868,7 @@ Only checked items will run. Changed files are skipped; existing content is prot
   <data name="未关联本机目录" xml:space="preserve"><value>Not linked on this device</value></data>
   <data name="尚未在本机运行" xml:space="preserve"><value>Not run on this device</value></data>
   <data name="本机状态" xml:space="preserve"><value>Local status</value></data>
-  <data name="刷新云端项目" xml:space="preserve"><value>Refresh cloud projects</value></data>
+  <data name="刷新云端项目" xml:space="preserve"><value>Refresh cloud</value></data>
   <data name="停止加载" xml:space="preserve"><value>Stop loading</value></data>
   <data name="刷新以查看云端项目" xml:space="preserve"><value>Refresh to view cloud projects</value></data>
   <data name="请先在设置中连接账户并选择管理目录。" xml:space="preserve"><value>Connect your account and select a management folder in Settings.</value></data>
@@ -1255,4 +1255,7 @@ Evidence is local SHA-256 and cloud metadata; cloud file bodies are not download
   <data name="需要确认版本" xml:space="preserve"><value>Choose a version to continue</value></data>
   <data name="需要修复后重试" xml:space="preserve"><value>Action required before retrying</value></data>
   <data name="CompletedTaskFileChanged" xml:space="preserve"><value>This file changed again after the original task completed. Its new version was skipped during this continuation; preview again or wait for the next normal comparison.</value></data>
+  <data name="暂停选中备份" xml:space="preserve"><value>Pause project</value></data>
+  <data name="恢复选中备份" xml:space="preserve"><value>Resume project</value></data>
+  <data name="项目备份已暂停" xml:space="preserve"><value>Paused</value></data>
 </root>

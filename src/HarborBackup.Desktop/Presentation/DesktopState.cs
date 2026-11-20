@@ -30,10 +30,11 @@ internal sealed record ProjectRow(string Destination, string Source, string Targ
 {
     public ProjectHealthSnapshot? Health { get; init; }
     public AutomaticBackupMode AutomaticMode { get; init; }
+    public bool BackupPaused { get; init; }
     public bool NeedsInitialization { get; init; }
     public RecoveryDisposition Recovery { get; init; }
-    public string DisplayAutomaticMode => IsLocal ? UiText.Text(AutomaticMode switch
-    { AutomaticBackupMode.Bidirectional => "双向备份", AutomaticBackupMode.DownloadOnly => "仅下载", _ => "仅上传" }) : "—";
+    public string DisplayAutomaticMode => !IsLocal ? "—" : BackupPaused ? UiText.Text("项目备份已暂停") : UiText.Text(AutomaticMode switch
+    { AutomaticBackupMode.Bidirectional => "双向备份", AutomaticBackupMode.DownloadOnly => "仅下载", _ => "仅上传" });
     public string DisplayResult => UiText.Text(Recovery == RecoveryDisposition.None ? Result : ReportPresentation.RecoveryCaption(Recovery));
     public string DisplaySource => IsLocal ? Source : "—";
     public string DisplayLocalStatus => UiText.Text(LocalStatus);

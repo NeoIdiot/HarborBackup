@@ -16,6 +16,8 @@ public sealed record ConfigurationSnapshot(IReadOnlyList<ProjectDefinition> Proj
     // Local execution policy is separate from persisted recovery mappings and their signatures.
     public IReadOnlyDictionary<string, AutomaticBackupMode> AutomaticBackupModes { get; init; } = new Dictionary<string, AutomaticBackupMode>(StringComparer.Ordinal);
     public AutomaticBackupMode GetAutomaticBackupMode(string projectId) => AutomaticBackupModes.GetValueOrDefault(projectId, AutomaticBackupMode.UploadOnly);
+    public IReadOnlySet<string> PausedProjects { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+    public bool IsProjectPaused(string projectId) => PausedProjects.Contains(projectId);
     public string ArchiveDirectory { get; init; } = "";
     public string ConflictDirectory { get; init; } = "";
     public string LogDirectory { get; init; } = "";
@@ -70,6 +72,7 @@ public static class ConfigurationReader
         if (folders.ValueKind != JsonValueKind.Array) throw new FormatException("folders must be an array.");
         var projects = new List<ProjectDefinition>();
         var automaticBackupModes = new Dictionary<string, AutomaticBackupMode>(StringComparer.Ordinal);
+        var pausedProjects = new HashSet<string>(StringComparer.Ordinal);
         var retired = Get(config, "retiredMappings").ValueKind == JsonValueKind.Undefined ? new List<CloudMapping>() :
             JsonSerializer.Deserialize<List<CloudMapping>>(Get(config, "retiredMappings"), AtomicJson.Options)
             ?? throw new FormatException("Invalid retired mappings.");
@@ -92,6 +95,10 @@ public static class ConfigurationReader
             var projectId = Text(Get(entry, "id"));
             if (!FileVersion.IsHash(projectId) || !ids.Add(projectId)) throw new FormatException("Project IDs must be valid and unique.");
             automaticBackupModes.Add(projectId, ReadAutomaticBackupMode(entry));
+            var paused = Get(entry, "backupPaused");
+            if (paused.ValueKind == JsonValueKind.True) pausedProjects.Add(projectId);
+            else if (paused.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.False))
+                throw new FormatException("backupPaused must be a boolean.");
             var destination = PathRules.Relative(Text(Get(entry, "destination")), true);
             if (projects.Any(p => p.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase) || p.Destination.StartsWith(destination + "/", StringComparison.OrdinalIgnoreCase) || destination.StartsWith(p.Destination + "/", StringComparison.OrdinalIgnoreCase))) throw new FormatException("Cloud project destinations overlap.");
             if (destination.Equals(account.RootName, StringComparison.OrdinalIgnoreCase) ||
@@ -132,7 +139,7 @@ public static class ConfigurationReader
         if (projects.Any(p => (p.Source.Length != 0 && PathRules.Overlaps(log, p.Source))))
             throw new FormatException("Log directory overlaps business files.");
         var snapshot = new ConfigurationSnapshot(projects.AsReadOnly(), new(state, deviceId, values.Hash, values.ContinueOnError), values.IntervalMinutes, values.StartDelayMinutes, root)
-        { CloudAccount = account, DismissedCloudProjects = dismissed, AutomaticBackupModes = automaticBackupModes,
+        { CloudAccount = account, DismissedCloudProjects = dismissed, AutomaticBackupModes = automaticBackupModes, PausedProjects = pausedProjects,
           AutomaticBudget = values.AutomaticBudget,
           UploadKiBPerSecond = values.UploadKiBPerSecond, DownloadKiBPerSecond = values.DownloadKiBPerSecond,
           ArchiveRetention = account.ArchiveRetention, ConflictRetention = account.ConflictRetention, ArchiveDirectory = archive, ConflictDirectory = conflict, LogDirectory = log, HistoryDirectory = data.History, LogRetentionDays = values.LogRetentionDays, HistoryRetentionDays = values.HistoryRetentionDays, ExecutionTimeLimitMinutes = values.ExecutionLimitMinutes };
